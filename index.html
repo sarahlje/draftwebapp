@@ -19,27 +19,27 @@
 
   <label>Goal:</label>
   <select id="goal">
-    <option value="strength">Strength</option>
-    <option value="cardio">Cardio</option>
-    <option value="hypertrophy">Muscle Growth</option>
+    <option value="strength">Build strength</option>
+    <option value="cardio">Cardio conditioning</option>
+    <option value="hypertrophy">Muscle growth</option>
   </select>
 
-  <label>Available Equipment (comma separated):</label>
-  <input id="equipment" placeholder="e.g. dumbbells, bench" />
+  <label>Available Equipment:</label>
+  <select id="equipment">
+    <option value="barbell">Barbell</option>
+    <option value="dumbbells">Dumbbells</option>
+    <option value="kettlebells">Kettlebells</option>
+    <option value="cable machine">Cable machine</option>
+    <option value="treadmill">Treadmill</option>
+    <option value="rowing machine">Rowing machine</option>
+  </select>
 
   <label>Time (minutes):</label>
   <input id="timeLimit" type="number" value="20" />
 
-  <label>Energy Level:</label>
-  <select id="energyLevel">
-    <option value="low">Low</option>
-    <option value="medium" selected>Medium</option>
-    <option value="high">High</option>
-  </select>
-
   <button onclick="generate()">Generate Workout</button>
 
-  <h3>Workout Plan</h3>
+  <br><h3>Workout Plan</h3>
   <div id="workoutResult"></div>
 
   <script src="script.js"></script>
