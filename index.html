@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="container">
+  <h2>Quick Workout Generator</h2>
+
+  <label>Focus Area:</label>
+  <select id="focusArea">
+    <option value="upper body">Upper Body</option>
+    <option value="lower body">Lower Body</option>
+    <option value="full body">Full Body</option>
+  </select>
+
+  <label>Goal:</label>
+  <select id="goal">
+    <option value="strength">Strength</option>
+    <option value="cardio">Cardio</option>
+    <option value="hypertrophy">Muscle Growth</option>
+  </select>
+
+  <label>Available Equipment (comma separated):</label>
+  <input id="equipment" placeholder="e.g. dumbbells, bench" />
+
+  <label>Time (minutes):</label>
+  <input id="timeLimit" type="number" value="20" />
+
+  <label>Energy Level:</label>
+  <select id="energyLevel">
+    <option value="low">Low</option>
+    <option value="medium" selected>Medium</option>
+    <option value="high">High</option>
+  </select>
+
+  <button onclick="generate()">Generate Workout</button>
+
+  <h3>Workout Plan</h3>
+  <div id="workoutResult"></div>
+
+  <script src="script.js"></script>
+</div>
+</body>
+</html>
