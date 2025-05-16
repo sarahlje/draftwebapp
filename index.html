@@ -1,48 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workout Generator</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Workout Wizard - Workout Generator</title>
+    <link rel="stylesheet" href="style.css">
 <body>
-<div class="container">
-  <h2>Quick Workout Generator</h2>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>Workout Wizard</h1>
+                <span class="tagline">Instantly create personalised workouts customised to your needs.</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Generate Workout</a></li>
+                    <li><a href="#">History</a></li>
+                    <li><a href="#">Profile</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-  <label>Focus Area:</label>
-  <select id="focusArea">
-    <option value="upper body">Upper Body</option>
-    <option value="lower body">Lower Body</option>
-    <option value="full body">Full Body</option>
-  </select>
+    <main>
+        <div class="container">
+            <section class="generator-section">
+                <h2>Generate Your Workout</h2>
+                <p>Tell us what you need today, and we'll create the perfect workout for you.</p>
+                
+                <form id="workout-form">
+                    <div class="form-group">
+                        <label for="workout-focus">Workout Focus</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="workout-focus" value="upper" checked>
+                                <span class="radio-label">Upper Body</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="workout-focus" value="lower">
+                                <span class="radio-label">Lower Body</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="workout-focus" value="full">
+                                <span class="radio-label">Full Body</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="workout-focus" value="core">
+                                <span class="radio-label">Core</span>
+                            </label>
+                        </div>
+                    </div>
 
-  <label>Goal:</label>
-  <select id="goal">
-    <option value="strength">Build strength</option>
-    <option value="cardio">Cardio conditioning</option>
-    <option value="hypertrophy">Muscle growth</option>
-  </select>
+                    <div class="form-group">
+                        <label for="fitness-goal">Fitness Goal</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="fitness-goal" value="strength" checked>
+                                <span class="radio-label">Strength</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="fitness-goal" value="hypertrophy">
+                                <span class="radio-label">Muscle Growth</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="fitness-goal" value="endurance">
+                                <span class="radio-label">Endurance</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="fitness-goal" value="cardio">
+                                <span class="radio-label">Cardio</span>
+                            </label>
+                        </div>
+                    </div>
 
-  <label>Available Equipment:</label>
-  <select id="equipment">
-    <option value="barbell">Barbell</option>
-    <option value="dumbbells">Dumbbells</option>
-    <option value="kettlebells">Kettlebells</option>
-    <option value="cable machine">Cable machine</option>
-    <option value="treadmill">Treadmill</option>
-    <option value="rowing machine">Rowing machine</option>
-  </select>
+                    <div class="form-group">
+                        <label for="equipment">Available Equipment</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="barbell" checked>
+                                <span class="checkbox-label">Barbell</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="dumbbell" checked>
+                                <span class="checkbox-label">Dumbbells</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="kettlebell">
+                                <span class="checkbox-label">Kettlebells</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="cable">
+                                <span class="checkbox-label">Cable Machine</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="bodyweight" checked>
+                                <span class="checkbox-label">Bodyweight Only</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="bench">
+                                <span class="checkbox-label">Bench</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="bands">
+                                <span class="checkbox-label">Resistance Bands</span>
+                            </label>
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="equipment" value="machines">
+                                <span class="checkbox-label">Weight Machines</span>
+                            </label>
+                        </div>
+                    </div>
 
-  <label>Time (minutes):</label>
-  <input id="timeLimit" type="number" value="20" />
+                    <div class="form-group">
+                        <label for="workout-duration">Workout Duration</label>
+                        <div class="slider-container">
+                            <input type="range" id="workout-duration" name="workout-duration" min="15" max="90" step="5" value="45">
+                            <span id="duration-value">45 minutes</span>
+                        </div>
+                    </div>
 
-  <button onclick="generate()">Generate Workout</button>
+                    <div class="form-group">
+                        <label for="experience-level">Experience Level</label>
+                        <select id="experience-level" name="experience-level">
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate" selected>Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
 
-  <br><h3>Workout Plan</h3>
-  <div id="workoutResult"></div>
+                    <div class="form-group">
+                        <label for="energy-level">Energy Level Today</label>
+                        <div class="energy-selector">
+                            <label class="energy-option">
+                                <input type="radio" name="energy-level" value="low">
+                                <i class="fas fa-battery-quarter"></i>
+                                <span>Low</span>
+                            </label>
+                            <label class="energy-option">
+                                <input type="radio" name="energy-level" value="medium" checked>
+                                <i class="fas fa-battery-half"></i>
+                                <span>Medium</span>
+                            </label>
+                            <label class="energy-option">
+                                <input type="radio" name="energy-level" value="high">
+                                <i class="fas fa-battery-full"></i>
+                                <span>High</span>
+                            </label>
+                        </div>
+                    </div>
 
-  <script src="script.js"></script>
-</div>
+                    <div class="form-actions">
+                        <button type="submit" id="generate-btn">Generate Workout</button>
+                        <button type="button" id="save-preferences">Save as Default</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="result-section" id="workout-result">
+                <!-- Workout will be generated here -->
+            </section>
+        </div>
+    </main>
+
+    <div class="modal" id="exercise-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <h3 id="modal-exercise-name"></h3>
+                <div class="exercise-demo">
+                    <img id="modal-exercise-image" src="/api/placeholder/400/320" alt="Exercise demonstration">
+                </div>
+                <div class="exercise-instructions">
+                    <h4>Instructions:</h4>
+                    <p id="modal-exercise-instructions"></p>
+                </div>
+                <div class="exercise-tips">
+                    <h4>Tips:</h4>
+                    <ul id="modal-exercise-tips"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 FitFlow - Your Personalized Workout Generator</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
