@@ -4,75 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Workout Wizard</title>
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <link rel="icon" href="https://em-content.zobj.net/source/microsoft-teams/363/crystal-ball_1f52e.png" />
 </head>
 <body>
   <header>
-    <h1>Workout Wizard</h1>
+    <h1>
+      <img src="https://cdn-icons-png.flaticon.com/512/566/566294.png" alt="Wizard Icon" style="height: 36px; vertical-align: middle; margin-right: 10px;" />
+      Workout Wizard
+    </h1>
     <p>Conjure up your perfect workout in seconds 🪄</p>
+    <p>Select your goals, focus areas, and equipment — then let the magic happen!</p>
+    <label class="theme-toggle">
+      <input type="checkbox" id="theme-switch" onchange="document.body.classList.toggle('dark-mode')" />
+      Toggle Light/Dark Theme
+    </label>
   </header>
 
   <main>
     <form id="workout-form">
       <fieldset>
-        <legend>Workout Preferences</legend>
-
         <label for="fitnessGoal">Fitness Goal:</label>
-        <select id="fitnessGoal" name="fitnessGoal">
+        <select id="fitnessGoal" name="fitness-goal">
           <option value="strength">Strength</option>
           <option value="hypertrophy">Hypertrophy</option>
           <option value="endurance">Endurance</option>
         </select>
 
-        <label for="daysPerWeek">Days per Week:</label>
-        <input type="number" id="daysPerWeek" name="daysPerWeek" min="1" max="7" />
-
-        <label for="timePerWorkout">Time per Workout (minutes):</label>
-        <input type="number" id="timePerWorkout" name="timePerWorkout" min="10" max="180" />
+        <label for="workout-duration">Time per Workout:</label>
+        <input type="range" id="workout-duration" name="workout-duration" min="10" max="90" step="5" value="30" />
+        <span id="duration-value">30 minutes</span>
       </fieldset>
 
       <fieldset>
         <legend>Body Parts to Focus On</legend>
-        <div>
-          <input type="checkbox" id="chest" name="bodyParts" value="chest" />
-          <label for="chest">Chest</label>
-        </div>
-        <div>
-          <input type="checkbox" id="back" name="bodyParts" value="back" />
-          <label for="back">Back</label>
-        </div>
-        <div>
-          <input type="checkbox" id="legs" name="bodyParts" value="legs" />
-          <label for="legs">Legs</label>
-        </div>
-        <div>
-          <input type="checkbox" id="arms" name="bodyParts" value="arms" />
-          <label for="arms">Arms</label>
-        </div>
-        <div>
-          <input type="checkbox" id="shoulders" name="bodyParts" value="shoulders" />
-          <label for="shoulders">Shoulders</label>
-        </div>
-        <div>
-          <input type="checkbox" id="core" name="bodyParts" value="core" />
-          <label for="core">Core</label>
-        </div>
+        <label><input type="checkbox" name="workout-focus" value="chest" /> Chest</label>
+        <label><input type="checkbox" name="workout-focus" value="back" /> Back</label>
+        <label><input type="checkbox" name="workout-focus" value="legs" /> Legs</label>
+        <label><input type="checkbox" name="workout-focus" value="arms" /> Arms</label>
+        <label><input type="checkbox" name="workout-focus" value="shoulders" /> Shoulders</label>
+        <label><input type="checkbox" name="workout-focus" value="core" /> Core</label>
       </fieldset>
 
       <fieldset>
-        <legend>Preferences</legend>
-        <label for="equipment">Equipment:</label>
-        <select id="equipment" name="equipment">
-          <option value="any">Any</option>
-          <option value="bodyweight">Bodyweight Only</option>
-          <option value="dumbbells">Dumbbells</option>
-          <option value="barbell">Barbell</option>
-          <option value="machines">Machines</option>
-        </select>
+        <legend>Available Equipment</legend>
+        <label><input type="checkbox" name="equipment" value="bodyweight" /> Bodyweight Only</label>
+        <label><input type="checkbox" name="equipment" value="dumbbells" /> Dumbbells</label>
+        <label><input type="checkbox" name="equipment" value="barbell" /> Barbell</label>
+        <label><input type="checkbox" name="equipment" value="machines" /> Machines</label>
+        <label><input type="checkbox" name="equipment" value="any" /> Any</label>
+      </fieldset>
 
-        <label for="experience">Experience Level:</label>
-        <select id="experience" name="experience">
+      <fieldset>
+        <legend>Experience Level</legend>
+        <label for="experience-level">Choose your level:</label>
+        <select id="experience-level" name="experience-level">
           <option value="beginner">Beginner</option>
           <option value="intermediate">Intermediate</option>
           <option value="advanced">Advanced</option>
@@ -82,18 +68,21 @@
       <button type="submit" id="generate-btn">Generate Workout 🧙‍♂️</button>
     </form>
 
-    <section id="workout-output">
-      <!-- Generated workout cards will be inserted here -->
+    <section id="workout-result" style="display: none;">
+      <!-- Generated workout results will go here -->
     </section>
   </main>
 
   <div id="exercise-modal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
-      <div id="modal-body"></div>
+      <h2 id="modal-exercise-name"></h2>
+      <img id="modal-exercise-image" src="" alt="Exercise Image" />
+      <p id="modal-exercise-instructions"></p>
+      <ul id="modal-exercise-tips"></ul>
     </div>
   </div>
 
-  <script src="/script.js"></script>
+  <script src="/js/script.js"></script>
 </body>
 </html>
