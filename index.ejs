@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Workout Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Workout Form -->
+  <form id="workout-form">
+    <h2>Generate Your Workout</h2>
+
+    <label for="focus">Workout Focus</label>
+    <select id="focus" name="focus" required>
+      <option value="full" <%= focus === 'full' ? 'selected' : '' %>Full Body</option>
+      <option value="upper" <%= focus === 'upper' ? 'selected' : '' %>Upper Body</option>
+      <option value="lower" <%= focus === 'lower' ? 'selected' : '' %>Lower Body</option>
+    </select>
+
+    <label for="goal">Fitness Goal</label>
+    <select id="goal" name="goal" required>
+      <option value="strength" <%= goal === 'strength' ? 'selected' : '' %>Strength</option>
+      <option value="cardio" <%= goal === 'cardio' ? 'selected' : '' %>Cardio</option>
+      <option value="mobility" <%= goal === 'mobility' ? 'selected' : '' %>Mobility</option>
+    </select>
+
+    <label for="duration">Duration (minutes)</label>
+    <input type="number" id="duration" name="duration" min="10" max="90" value="<%= duration || 30 %>" required />
+
+    <label>Available Equipment</label>
+    <div>
+      <label><input type="checkbox" name="equipment" value="bodyweight" <%= equipment?.includes('bodyweight') ? 'checked' : '' %>Bodyweight</label><br/>
+      <label><input type="checkbox" name="equipment" value="dumbbells" <%= equipment?.includes('dumbbells') ? 'checked' : '' %>Dumbbells</label><br/>
+      <label><input type="checkbox" name="equipment" value="barbells" <%= equipment?.includes('barbells') ? 'checked' : '' %>Barbells</label><br/>
+      <label><input type="checkbox" name="equipment" value="resistance_bands" <%= equipment?.includes('resistance_bands') ? 'checked' : '' %>Resistance Bands</label><br/>
+    </div>
+
+    <button id="generate-btn" type="submit">Generate Workout</button>
+  </form>
+
+  <!-- Workout Output -->
+  <div id="workout-output"></div>
+
+  <!-- Exercise Modal -->
+  <div id="exercise-modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3 id="modal-exercise-name">Exercise Name</h3>
+      <img id="modal-exercise-image" src="" alt="Exercise Image" />
+      <p id="modal-exercise-instructions">Detailed instructions will appear here.</p>
+      <ul id="modal-exercise-tips"></ul>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script src="script.js"></script>
+</body>
+</html>
