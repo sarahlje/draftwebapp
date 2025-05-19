@@ -2,60 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Workout Generator</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Wizard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="https://em-content.zobj.net/source/microsoft-teams/363/crystal-ball_1f52e.png" />
 </head>
 <body>
+  <header>
+    <h1>Workout Wizard</h1>
+    <p>Conjure up your perfect workout in seconds 🪄</p>
+  </header>
 
-  <!-- Workout Form -->
-  <form id="workout-form">
-    <h2>Generate Your Workout</h2>
+  <main>
+    <form id="workout-form">
+      <fieldset>
+        <legend>Workout Preferences</legend>
 
-    <label for="focus">Workout Focus</label>
-    <select id="focus" name="focus" required>
-      <option value="full" <%= focus === 'full' ? 'selected' : '' %>Full Body</option>
-      <option value="upper" <%= focus === 'upper' ? 'selected' : '' %>Upper Body</option>
-      <option value="lower" <%= focus === 'lower' ? 'selected' : '' %>Lower Body</option>
-    </select>
+        <label for="fitnessGoal">Fitness Goal:</label>
+        <select id="fitnessGoal" name="fitnessGoal">
+          <option value="strength">Strength</option>
+          <option value="hypertrophy">Hypertrophy</option>
+          <option value="endurance">Endurance</option>
+        </select>
 
-    <label for="goal">Fitness Goal</label>
-    <select id="goal" name="goal" required>
-      <option value="strength" <%= goal === 'strength' ? 'selected' : '' %>Strength</option>
-      <option value="cardio" <%= goal === 'cardio' ? 'selected' : '' %>Cardio</option>
-      <option value="mobility" <%= goal === 'mobility' ? 'selected' : '' %>Mobility</option>
-    </select>
+        <label for="daysPerWeek">Days per Week:</label>
+        <input type="number" id="daysPerWeek" name="daysPerWeek" min="1" max="7" />
 
-    <label for="duration">Duration (minutes)</label>
-    <input type="number" id="duration" name="duration" min="10" max="90" value="<%= duration || 30 %>" required />
+        <label for="timePerWorkout">Time per Workout (minutes):</label>
+        <input type="number" id="timePerWorkout" name="timePerWorkout" min="10" max="180" />
+      </fieldset>
 
-    <label>Available Equipment</label>
-    <div>
-      <label><input type="checkbox" name="equipment" value="bodyweight" <%= equipment?.includes('bodyweight') ? 'checked' : '' %>Bodyweight</label><br/>
-      <label><input type="checkbox" name="equipment" value="dumbbells" <%= equipment?.includes('dumbbells') ? 'checked' : '' %>Dumbbells</label><br/>
-      <label><input type="checkbox" name="equipment" value="barbells" <%= equipment?.includes('barbells') ? 'checked' : '' %>Barbells</label><br/>
-      <label><input type="checkbox" name="equipment" value="resistance_bands" <%= equipment?.includes('resistance_bands') ? 'checked' : '' %>Resistance Bands</label><br/>
-    </div>
+      <fieldset>
+        <legend>Body Parts to Focus On</legend>
+        <div>
+          <input type="checkbox" id="chest" name="bodyParts" value="chest" />
+          <label for="chest">Chest</label>
+        </div>
+        <div>
+          <input type="checkbox" id="back" name="bodyParts" value="back" />
+          <label for="back">Back</label>
+        </div>
+        <div>
+          <input type="checkbox" id="legs" name="bodyParts" value="legs" />
+          <label for="legs">Legs</label>
+        </div>
+        <div>
+          <input type="checkbox" id="arms" name="bodyParts" value="arms" />
+          <label for="arms">Arms</label>
+        </div>
+        <div>
+          <input type="checkbox" id="shoulders" name="bodyParts" value="shoulders" />
+          <label for="shoulders">Shoulders</label>
+        </div>
+        <div>
+          <input type="checkbox" id="core" name="bodyParts" value="core" />
+          <label for="core">Core</label>
+        </div>
+      </fieldset>
 
-    <button id="generate-btn" type="submit">Generate Workout</button>
-  </form>
+      <fieldset>
+        <legend>Preferences</legend>
+        <label for="equipment">Equipment:</label>
+        <select id="equipment" name="equipment">
+          <option value="any">Any</option>
+          <option value="bodyweight">Bodyweight Only</option>
+          <option value="dumbbells">Dumbbells</option>
+          <option value="barbell">Barbell</option>
+          <option value="machines">Machines</option>
+        </select>
 
-  <!-- Workout Output -->
-  <div id="workout-output"></div>
+        <label for="experience">Experience Level:</label>
+        <select id="experience" name="experience">
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </fieldset>
 
-  <!-- Exercise Modal -->
-  <div id="exercise-modal">
+      <button type="submit" id="generate-btn">Generate Workout 🧙‍♂️</button>
+    </form>
+
+    <section id="workout-output">
+      <!-- Generated workout cards will be inserted here -->
+    </section>
+  </main>
+
+  <div id="exercise-modal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
-      <h3 id="modal-exercise-name">Exercise Name</h3>
-      <img id="modal-exercise-image" src="" alt="Exercise Image" />
-      <p id="modal-exercise-instructions">Detailed instructions will appear here.</p>
-      <ul id="modal-exercise-tips"></ul>
+      <div id="modal-body"></div>
     </div>
   </div>
 
-  <!-- Script -->
-  <script src="/js/script.js"></script>
-
+  <script src="/script.js"></script>
 </body>
 </html>
