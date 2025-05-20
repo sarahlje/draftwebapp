@@ -10,8 +10,8 @@
 <body>
   <header>
     <h1>
-      <img src="https://cdn-icons-png.flaticon.com/512/566/566294.png" alt="Wizard Icon" style="height: 36px; vertical-align: middle; margin-right: 10px;" />
-      Workout Wizard
+      <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
+  Workout Wizard
     </h1>
     <p>Conjure up your perfect workout in seconds 🪄</p>
     <p>Select your goals, focus areas, and equipment — then let the magic happen!</p>
@@ -24,14 +24,14 @@
   <main>
     <form id="workout-form">
       <fieldset>
-        <label for="fitnessGoal">Fitness Goal:</label>
+        <legend>Fitness Goal</legend>
         <select id="fitnessGoal" name="fitness-goal">
           <option value="strength">Strength</option>
-          <option value="hypertrophy">Hypertrophy</option>
-          <option value="endurance">Endurance</option>
+          <option value="cardio">Cardiovascular Endurance</option>
+          <option value="general_fitness">General Fitness</option>
         </select>
 
-        <label for="workout-duration">Time per Workout:</label>
+        <legend>Time per Workout</legend>
         <input type="range" id="workout-duration" name="workout-duration" min="10" max="90" step="5" value="30" />
         <span id="duration-value">30 minutes</span>
       </fieldset>
@@ -41,17 +41,22 @@
         <label><input type="checkbox" name="workout-focus" value="chest" /> Chest</label>
         <label><input type="checkbox" name="workout-focus" value="back" /> Back</label>
         <label><input type="checkbox" name="workout-focus" value="legs" /> Legs</label>
+        <label><input type="checkbox" name="workout-focus" value="glutes" /> Glutes</label>
         <label><input type="checkbox" name="workout-focus" value="arms" /> Arms</label>
         <label><input type="checkbox" name="workout-focus" value="shoulders" /> Shoulders</label>
         <label><input type="checkbox" name="workout-focus" value="core" /> Core</label>
+        <label><input type="checkbox" name="workout-focus" value="full_body" /> Full Body</label>
       </fieldset>
 
       <fieldset>
         <legend>Available Equipment</legend>
         <label><input type="checkbox" name="equipment" value="bodyweight" /> Bodyweight Only</label>
+        <label><input type="checkbox" name="equipment" value="treadmill" /> Treadmill</label>
         <label><input type="checkbox" name="equipment" value="dumbbells" /> Dumbbells</label>
+        <label><input type="checkbox" name="equipment" value="kettlebells" /> Kettlebells</label>
         <label><input type="checkbox" name="equipment" value="barbell" /> Barbell</label>
-        <label><input type="checkbox" name="equipment" value="machines" /> Machines</label>
+        <label><input type="checkbox" name="equipment" value="barbell" /> Bench</label>
+        <label><input type="checkbox" name="equipment" value="cable_machines" /> Cable Machine</label>
         <label><input type="checkbox" name="equipment" value="any" /> Any</label>
       </fieldset>
 
@@ -65,7 +70,7 @@
         </select>
       </fieldset>
 
-      <button type="submit" id="generate-btn">Generate Workout 🧙‍♂️</button>
+      <button type="submit" id="generate-btn">Generate Workout ✨</button>
     </form>
 
     <section id="workout-result" style="display: none;">

@@ -28,7 +28,6 @@ function setupEventListeners() {
     });
 
     document.getElementById('workout-form').addEventListener('submit', handleFormSubmit);
-    document.getElementById('save-preferences').addEventListener('click', savePreferences);
     document.querySelector('.close-modal').addEventListener('click', () => {
         document.getElementById('exercise-modal').style.display = 'none';
     });
@@ -44,12 +43,11 @@ async function handleFormSubmit(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const workoutParams = {
-        focus: formData.get('workout-focus'),
+        focus: formData.getAll('workout-focus'),
         goal: formData.get('fitness-goal'),
-        equipment: Array.from(formData.getAll('equipment')),
+        equipment: formData.getAll('equipment'),
         duration: formData.get('workout-duration'),
-        experience: formData.get('experience-level'),
-        energy: formData.get('energy-level')
+        experience: formData.get('experience-level')
     };
 
     try {
@@ -77,10 +75,9 @@ function displayWorkout(workout) {
 
     const summaryHTML = `
         <h3>${workout.name}</h3>
-        <p><strong>Focus:</strong> ${workout.focus}</p>
+        <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
         <p><strong>Goal:</strong> ${workout.goal}</p>
         <p><strong>Duration:</strong> ${workout.duration} minutes</p>
-        <p><strong>Calories:</strong> ${workout.estimatedCalories}</p>
     `;
     workoutResult.insertAdjacentHTML('beforeend', summaryHTML);
 
@@ -89,7 +86,7 @@ function displayWorkout(workout) {
             <div class="exercise-card">
                 <h4>${index + 1}. ${exercise.name}</h4>
                 <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
-                <p>${exercise.sets} sets × ${exercise.reps} ${exercise.goal === 'cardio' ? 'seconds' : 'reps'}</p>
+                <p>${exercise.sets} sets × ${exercise.reps} ${workout.goal === 'cardio' ? 'seconds' : 'reps'}</p>
                 <button onclick="showExerciseDetails(${index})">Details</button>
             </div>
         `;
@@ -127,12 +124,11 @@ function savePreferences() {
     const form = document.getElementById('workout-form');
     const formData = new FormData(form);
     const preferences = {
-        focus: formData.get('workout-focus'),
+        focus: formData.getAll('workout-focus'),
         goal: formData.get('fitness-goal'),
-        equipment: Array.from(formData.getAll('equipment')),
+        equipment: formData.getAll('equipment'),
         duration: formData.get('workout-duration'),
-        experience: formData.get('experience-level'),
-        energy: formData.get('energy-level')
+        experience: formData.get('experience-level')
     };
     localStorage.setItem('workout-preferences', JSON.stringify(preferences));
 
@@ -154,13 +150,14 @@ function loadPreferences() {
     if (!saved) return;
     const prefs = JSON.parse(saved);
 
-    document.querySelector(`input[name="workout-focus"][value="${prefs.focus}"]`)?.click();
-    document.querySelector(`input[name="fitness-goal"][value="${prefs.goal}"]`)?.click();
-    document.querySelectorAll('input[name="equipment"]').forEach(checkbox => {
-        checkbox.checked = prefs.equipment.includes(checkbox.value);
+    document.querySelectorAll('input[name="workout-focus"]').forEach(cb => {
+        cb.checked = prefs.focus?.includes(cb.value);
     });
-    document.getElementById('workout-duration').value = prefs.duration;
+    document.querySelectorAll('input[name="equipment"]').forEach(cb => {
+        cb.checked = prefs.equipment?.includes(cb.value);
+    });
+    document.getElementById('fitnessGoal').value = prefs.goal || 'strength';
+    document.getElementById('workout-duration').value = prefs.duration || 30;
     document.getElementById('duration-value').textContent = `${prefs.duration} minutes`;
-    document.getElementById('experience-level').value = prefs.experience;
-    document.querySelector(`input[name="energy-level"][value="${prefs.energy}"]`)?.click();
+    document.getElementById('experience-level').value = prefs.experience || 'beginner';
 }
