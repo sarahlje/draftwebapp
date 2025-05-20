@@ -209,7 +209,7 @@ body.dark-mode .exercise-card {
 }
 
 /* Modal Styles */
-#exercise-modal {
+#exercise-modal, #login-modal, #register-modal {
   display: none;
   position: fixed;
   z-index: 999;
@@ -250,7 +250,7 @@ body.dark-mode .modal-content {
   margin-bottom: 16px;
 }
 
-.close-modal {
+.close-modal, .close-login-modal, .close-register-modal {
   position: absolute;
   top: 12px;
   right: 16px;
@@ -260,13 +260,197 @@ body.dark-mode .modal-content {
   color: #aaa;
 }
 
-.close-modal:hover {
+.close-modal:hover, .close-login-modal:hover, .close-register-modal:hover {
   color: #333;
+}
+
+body.dark-mode .close-modal:hover,
+body.dark-mode .close-login-modal:hover,
+body.dark-mode .close-register-modal:hover {
+  color: #ddd;
+}
+
+/* Workout result section */
+#workout-result {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode #workout-result {
+  background-color: #2a2a3f;
+  color: var(--text-light);
+}
+
+.workout-actions {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.workout-actions button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.workout-actions button:hover {
+  background-color: #5848e6;
+  transform: translateY(-2px);
+}
+
+body.dark-mode .workout-actions button {
+  background-color: var(--primary-color-dark);
+}
+
+body.dark-mode .workout-actions button:hover {
+  background-color: #9285ff;
+}
+
+#save-workout-btn {
+  background-color: #28a745;
+}
+
+#save-workout-btn:hover {
+  background-color: #218838;
+}
+
+body.dark-mode #save-workout-btn {
+  background-color: #38c45a;
+}
+
+body.dark-mode #save-workout-btn:hover {
+  background-color: #2ead4e;
+}
+
+.view-exercise-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-exercise-btn:hover {
+  background-color: #5848e6;
+}
+
+body.dark-mode .view-exercise-btn {
+  background-color: var(--primary-color-dark);
+}
+
+body.dark-mode .view-exercise-btn:hover {
+  background-color: #9285ff;
+}
+
+/* Slider Styling */
+.slider-container {
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  outline: none;
+  position: relative;
+}
+
+/* This is for the colored slider track */
+input[type="range"]::before {
+  content: "";
+  position: absolute;
+  height: 8px;
+  border-radius: 5px;
+  background: linear-gradient(to right, #6C63FF, #a99fff);
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: var(--slider-progress, 0%);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+  z-index: 2;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  cursor: pointer;
+  transition: background 0.2s;
+  border: none;
+  position: relative;
+  z-index: 2;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #5848e6;
+  transform: scale(1.1);
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: #5848e6;
+  transform: scale(1.1);
+}
+
+body.dark-mode input[type="range"] {
+  background: #444;
+}
+
+body.dark-mode input[type="range"]::before {
+  background: linear-gradient(to right, #8a7fff, #c0b8ff);
+}
+
+body.dark-mode input[type="range"]::-webkit-slider-thumb {
+  background: var(--primary-color-dark);
+}
+
+body.dark-mode input[type="range"]::-moz-range-thumb {
+  background: var(--primary-color-dark);
+}
+
+body.dark-mode input[type="range"]::-webkit-slider-thumb:hover {
+  background: #9285ff;
+}
+
+body.dark-mode input[type="range"]::-moz-range-thumb:hover {
+  background: #9285ff;
+}
+
+#duration-value {
+  min-width: 90px;
+  font-weight: 500;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
-  form, .modal-content, #workout-output {
+  form, .modal-content, #workout-output, #workout-result {
     padding: 15px;
     margin: 10px;
   }
@@ -278,5 +462,17 @@ body.dark-mode .modal-content {
 
   .exercise-card {
     padding: 14px;
+  }
+  
+  .auth-link {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-top: 15px;
+    display: block;
+  }
+  
+  .workout-actions {
+    flex-direction: column;
   }
 }

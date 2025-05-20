@@ -44,26 +44,19 @@ enum Equipment {
 
 // Exercise model - reusable exercises library
 model Exercise {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  description  String?
-  muscleGroup  String
-  equipment    String?
-  difficulty   String
-  category     String
-  instructions String?
-  imageUrl     String?
-  createdAt    DateTime @default(now())
-}
-
-// User model - for account management
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
-  workouts  Workout[]
+  id                    Int      @id @default(autoincrement())
+  name                  String   @unique
+  description           String?
+  muscleGroup           String
+  equipment             String?
+  difficulty            String
+  category              String
+  instructions          String?
+  imageUrl              String?
+  isCompound            Boolean  @default(false)
+  estimatedTimeInMinutes Int     @default(3)
+  tips                  String[]  @default([])
+  createdAt             DateTime @default(now())
 }
 
 // Workout model - stores full generated workouts
@@ -76,7 +69,5 @@ model Workout {
   experience Experience
   equipment  Equipment[]  // ✅ multiple equipment options
   exercises  Json
-  userId     Int?
-  user       User?        @relation(fields: [userId], references: [id])
   createdAt  DateTime     @default(now())
 }
