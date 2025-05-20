@@ -20,12 +20,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Add debugging middleware to log requests
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
-
 // View engine setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -43,61 +37,11 @@ app.get('/', (req, res) => {
 // Import and use routes
 const workoutRoutes = require('./routes/workout.js');
 const apiRoutes = require('./routes/api.js');
-const fallbackApiRoutes = require('./routes/fallback-api.js');
 
 app.use('/api', workoutRoutes);
 app.use('/api', apiRoutes);
-app.use('/api', fallbackApiRoutes);
 
-// API diagnostics route - useful for debugging
-app.get('/api/diagnostics', async (req, res) => {
-  try {
-    // Check database connection
-    const tableCount = await prisma.$queryRaw`
-      SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public'
-    `;
-    
-    // Check tables
-    const tables = await prisma.$queryRaw`
-      SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
-    `;
-    
-    // Check exercise count
-    let exerciseCount = 0;
-    let sampleExercise = null;
-    try {
-      exerciseCount = await prisma.exercise.count();
-      if (exerciseCount > 0) {
-        sampleExercise = await prisma.exercise.findFirst();
-      }
-    } catch (e) {
-      console.error("Error counting exercises:", e);
-    }
-    
-    res.json({
-      status: 'connected',
-      databaseInfo: {
-        tableCount: tableCount[0].count,
-        tables: tables.map(t => t.table_name),
-        exerciseCount,
-        sampleExercise
-      },
-      environment: {
-        nodeEnv: process.env.NODE_ENV,
-        port: PORT
-      }
-    });
-  } catch (error) {
-    console.error("Diagnostics error:", error);
-    res.status(500).json({ 
-      status: 'error', 
-      message: error.message,
-      stack: process.env.NODE_ENV === 'production' ? '(hidden in production)' : error.stack
-    });
-  }
-});
-
-// Error handler
+// Basic error handler
 app.use((err, req, res, next) => {
   console.error("Server error:", err.stack);
   res.status(500).send('Something broke!');

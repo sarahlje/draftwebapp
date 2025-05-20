@@ -30,6 +30,11 @@
           <option value="cardio">Cardiovascular Endurance</option>
           <option value="general_fitness">General Fitness</option>
         </select>
+        <div class="option-description">
+          <p><strong>Strength</strong>: Focuses on building muscle and power with higher weights and lower reps.</p>
+          <p><strong>Cardio</strong>: Improves heart health and endurance with higher reps and shorter rest periods.</p>
+          <p><strong>General Fitness</strong>: Balanced approach for overall health, combining strength and cardio elements.</p>
+        </div>
 
         <legend>Time per Workout</legend>
         <div class="slider-container">
@@ -57,8 +62,9 @@
         <label><input type="checkbox" name="equipment" value="dumbbells" /> Dumbbells</label>
         <label><input type="checkbox" name="equipment" value="kettlebells" /> Kettlebells</label>
         <label><input type="checkbox" name="equipment" value="barbell" /> Barbell</label>
-        <label><input type="checkbox" name="equipment" value="barbell" /> Bench</label>
+        <label><input type="checkbox" name="equipment" value="bench" /> Bench</label>
         <label><input type="checkbox" name="equipment" value="cable_machines" /> Cable Machine</label>
+        <label><input type="checkbox" name="equipment" value="machine" /> Exercise Machine</label>
         <label><input type="checkbox" name="equipment" value="any" /> Any</label>
       </fieldset>
 
@@ -70,6 +76,19 @@
           <option value="intermediate">Intermediate</option>
           <option value="advanced">Advanced</option>
         </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>Workout Style</legend>
+        <label for="workout-style">Choose your preferred style:</label>
+        <select id="workout-style" name="workout-style">
+          <option value="variety">Variety (More exercises, standard sets)</option>
+          <option value="focus">Focus (Fewer exercises, more sets)</option>
+        </select>
+        <div class="option-description">
+          <p><strong>Variety</strong>: Includes more different exercises with standard sets/reps. Great for keeping workouts interesting and targeting muscles from multiple angles.</p>
+          <p><strong>Focus</strong>: Concentrates on fewer exercises but with more sets per exercise. Ideal for mastering movements and creating greater stimulus on specific muscle groups.</p>
+        </div>
       </fieldset>
 
       <button type="submit" id="generate-btn">Generate Workout ✨</button>

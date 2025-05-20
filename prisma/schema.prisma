@@ -39,24 +39,25 @@ enum Equipment {
   barbell
   bench
   cable_machines
+  machine
   any
 }
 
 // Exercise model - reusable exercises library
 model Exercise {
-  id                    Int      @id @default(autoincrement())
-  name                  String   @unique
-  description           String?
-  muscleGroup           String
-  equipment             String?
-  difficulty            String
-  category              String
-  instructions          String?
-  imageUrl              String?
-  isCompound            Boolean  @default(false)
+  id                   Int      @id @default(autoincrement())
+  name                 String   @unique
+  description          String?
+  muscleGroup          String
+  equipment            String?
+  difficulty           String
+  category             String
+  instructions         String?
+  imageUrl             String?
+  isCompound           Boolean  @default(false)
   estimatedTimeInMinutes Int     @default(3)
-  tips                  String[]  @default([])
-  createdAt             DateTime @default(now())
+  tips                 String[] @default([])
+  createdAt            DateTime @default(now())
 }
 
 // Workout model - stores full generated workouts

@@ -137,7 +137,8 @@ async function handleFormSubmit(e) {
         goal: formData.get('fitness-goal'),
         equipment: formData.getAll('equipment'),
         duration: formData.get('workout-duration'),
-        experience: formData.get('experience-level')
+        experience: formData.get('experience-level'),
+        style: formData.get('workout-style') || 'variety' // Include the new workout style parameter
     };
     
     // Save preferences
@@ -203,9 +204,12 @@ function displayWorkout(workout) {
 
     const summaryHTML = `
         <h3>${workout.name}</h3>
-        <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
-        <p><strong>Goal:</strong> ${workout.goal}</p>
-        <p><strong>Duration:</strong> ${workout.duration} minutes</p>
+        <div class="workout-summary">
+            <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
+            <p><strong>Goal:</strong> ${workout.goal}</p>
+            <p><strong>Duration:</strong> ${workout.duration} minutes</p>
+            <p><strong>Style:</strong> ${workout.style === 'focus' ? 'Focus (High Volume)' : 'Variety'}</p>
+        </div>
         <div class="workout-actions">
             <button id="regenerate-btn">Regenerate Workout</button>
             <button id="save-workout-btn">Save Workout</button>
@@ -365,6 +369,11 @@ function loadPreferences() {
         const experienceLevel = document.getElementById('experience-level');
         if (experienceLevel) {
             experienceLevel.value = prefs.experience || 'beginner';
+        }
+        
+        const workoutStyle = document.getElementById('workout-style');
+        if (workoutStyle && prefs.style) {
+            workoutStyle.value = prefs.style;
         }
     } catch (error) {
         console.error('Error loading preferences:', error);

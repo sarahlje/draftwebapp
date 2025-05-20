@@ -56,12 +56,30 @@ router.post('/generate-workout', async (req, res) => {
       return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, experience));
     }
 
-    // Get ALL exercises from the database regardless of criteria
-    console.log("Getting all exercises without filtering");
-    const allExercises = await prisma.exercise.findMany();
+    // Get exercises that match the focus areas and equipment
+    console.log("Getting exercises that match focus areas:", focus);
+    console.log("And equipment:", equipment);
+    
+    const allExercises = await prisma.exercise.findMany({
+      where: {
+        OR: [
+          // Match exercises with the specific muscle groups requested
+          { muscleGroup: { in: focus } },
+          // Only include full_body exercises if specifically requested
+          ...(focus.includes('full_body') ? [{ muscleGroup: 'full_body' }] : [])
+        ],
+        AND: [
+          // Match exercises that use the available equipment
+          // If 'any' is selected, include all equipment
+          ...(equipment.includes('any') 
+              ? [] 
+              : [{ equipment: { in: equipment } }])
+        ]
+      }
+    });
     
     if (allExercises.length === 0) {
-      console.log("No exercises found even with relaxed criteria. Using fallback.");
+      console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
       return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, experience));
     }
     
