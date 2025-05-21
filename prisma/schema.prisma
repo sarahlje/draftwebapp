@@ -14,12 +14,6 @@ enum Goal {
   general_fitness
 }
 
-enum Experience {
-  beginner
-  intermediate
-  advanced
-}
-
 enum Focus {
   chest
   back
@@ -68,8 +62,8 @@ model Workout {
   name       String
   duration   Int          // in minutes
   goal       Goal
-  focus      Focus[]      // ✅ multiple body parts
-  equipment  Equipment[]  // ✅ multiple equipment options
+  focus      Focus[]      // multiple body parts
+  equipment  Equipment[]  // multiple equipment options
   exercises  Json
   createdAt  DateTime     @default(now())
   style      String?      // 'variety' or 'focus'

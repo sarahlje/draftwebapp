@@ -1,4 +1,4 @@
-// routes/api.js - Fixed version with relaxed criteria
+// routes/api.js - Updated version with fixes for variety and time calculation
 
 const express = require('express');
 const router = express.Router();
@@ -16,15 +16,15 @@ router.get('/exercises', async (req, res) => {
   }
 });
 
-// POST generate a workout with much more relaxed criteria
+// POST generate a workout
 router.post('/generate-workout', async (req, res) => {
   try {
     console.log("Received workout generation request:", req.body);
     
-    const { focus, goal, equipment, duration, experience } = req.body;
+    const { focus, goal, equipment, duration, style } = req.body;
     
-    if (!focus || !goal || !equipment || !duration || !experience) {
-      console.log("Missing required parameters:", { focus, goal, equipment, duration, experience });
+    if (!focus || !goal || !equipment || !duration) {
+      console.log("Missing required parameters:", { focus, goal, equipment, duration });
       return res.status(400).json({ 
         error: 'Missing required parameters' 
       });
@@ -53,36 +53,99 @@ router.post('/generate-workout', async (req, res) => {
     
     if (exerciseCount === 0) {
       console.log("No exercises found in database. Using fallback exercises.");
-      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, experience));
+      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
     }
 
     // Get exercises that match the focus areas and equipment
-    console.log("Getting exercises that match focus areas:", focus);
-    console.log("And equipment:", equipment);
+console.log("Getting exercises that match focus areas:", focus);
+console.log("And equipment:", equipment);
+
+let exerciseQuery = {};
+
+if (focus.includes('full_body')) {
+  // For full body workouts, get a mix of exercises from all major muscle groups
+  console.log("Creating a full body workout with diverse exercises");
+  exerciseQuery = {
+    where: {
+      AND: [
+        // Match exercises that use the available equipment
+        ...(equipment.includes('all') 
+            ? [] 
+            : [{ equipment: { in: equipment } }])
+      ]
+    }
+  };
+} else {
+  // For targeted workouts, match the specific muscle groups
+  exerciseQuery = {
+    where: {
+      OR: [
+        // Match exercises with the specific muscle groups requested
+        { muscleGroup: { in: focus } }
+      ],
+      AND: [
+        // Match exercises that use the available equipment
+        ...(equipment.includes('all') 
+            ? [] 
+            : [{ equipment: { in: equipment } }])
+      ]
+    }
+  };
+}
+
+const allExercises = await prisma.exercise.findMany(exerciseQuery);
+
+// For full body workouts, ensure we have a balanced mix of exercises
+if (focus.includes('full_body') && allExercises.length > 0) {
+  // Group exercises by muscle group
+  const exercisesByMuscleGroup = {};
+  
+  allExercises.forEach(exercise => {
+    if (!exercisesByMuscleGroup[exercise.muscleGroup]) {
+      exercisesByMuscleGroup[exercise.muscleGroup] = [];
+    }
+    exercisesByMuscleGroup[exercise.muscleGroup].push(exercise);
+  });
+  
+  console.log(`Found exercises for ${Object.keys(exercisesByMuscleGroup).length} different muscle groups`);
+  
+  // If we have enough muscle groups, create a balanced selection
+  if (Object.keys(exercisesByMuscleGroup).length >= 3) {
+    let balancedExercises = [];
+    const mainMuscleGroups = ['chest', 'back', 'legs', 'core', 'arms', 'shoulders'];
     
-    const allExercises = await prisma.exercise.findMany({
-      where: {
-        OR: [
-          // Match exercises with the specific muscle groups requested
-          { muscleGroup: { in: focus } },
-          // Only include full_body exercises if specifically requested
-          ...(focus.includes('full_body') ? [{ muscleGroup: 'full_body' }] : [])
-        ],
-        AND: [
-          // Match exercises that use the available equipment
-          // If 'any' is selected, include all equipment
-          ...(equipment.includes('any') 
-              ? [] 
-              : [{ equipment: { in: equipment } }])
-        ]
+    // First add exercises specifically tagged as full_body
+    if (exercisesByMuscleGroup['full_body']) {
+      // Add 1-2 full body exercises if available
+      const fullBodyCount = Math.min(2, exercisesByMuscleGroup['full_body'].length);
+      balancedExercises = balancedExercises.concat(
+        exercisesByMuscleGroup['full_body']
+          .sort(() => Math.random() - 0.5) // Shuffle
+          .slice(0, fullBodyCount)
+      );
+    }
+    
+    // Then add at least one exercise from each major muscle group
+    mainMuscleGroups.forEach(group => {
+      if (exercisesByMuscleGroup[group] && exercisesByMuscleGroup[group].length > 0) {
+        // Shuffle and take 1 exercise from this muscle group
+        const shuffled = [...exercisesByMuscleGroup[group]].sort(() => Math.random() - 0.5);
+        balancedExercises.push(shuffled[0]);
       }
     });
     
-    if (allExercises.length === 0) {
-      console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
-      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, experience));
-    }
+    // Replace allExercises with our balanced selection
+    allExercises.length = 0;
+    balancedExercises.forEach(ex => allExercises.push(ex));
     
+    console.log(`Created balanced selection with ${allExercises.length} exercises`);
+  }
+}
+
+if (allExercises.length === 0) {
+  console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
+  return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
+}
     // Create workout name
     const focusText = focus.includes('full_body') 
       ? 'Full Body' 
@@ -94,57 +157,79 @@ router.post('/generate-workout', async (req, res) => {
       'general_fitness': 'Fitness'
     }[goal];
     
-    const experienceText = {
-      'beginner': 'Beginner',
-      'intermediate': 'Intermediate',
-      'advanced': 'Advanced'
-    }[experience];
+    const styleText = style === 'focus' ? 'Focus' : 'Variety';
+    const workoutName = `${durationMinutes}-min ${focusText} ${goalText} Workout (${styleText})`;
     
-    const workoutName = `${durationMinutes}-min ${experienceText} ${focusText} ${goalText} Workout`;
-    
-    // Process exercises - add sets and reps
-    const processedExercises = allExercises.map(exercise => {
-      const processedExercise = { ...exercise };
-      
-      // Add sets and reps based on goal and experience
-      if (goal === 'strength') {
-        // Strength-focused workout
-        switch(experience) {
-          case 'beginner':
-            processedExercise.sets = 3;
-            processedExercise.reps = '8-10';
-            break;
-          case 'intermediate':
-            processedExercise.sets = 4;
-            processedExercise.reps = '6-8';
-            break;
-          case 'advanced':
-            processedExercise.sets = 5;
-            processedExercise.reps = '4-6';
-            break;
-        }
-      } else if (goal === 'cardio') {
-        // Cardio-focused workout
+// Process exercises - add sets and reps with better time allocation
+const processedExercises = allExercises.map(exercise => {
+  const processedExercise = { ...exercise };
+  
+  // Calculate sets based on goal, duration, and style
+  if (goal === 'strength') {
+    // Strength-focused workout
+    if (style === 'focus') {
+      // More sets for focus style
+      processedExercise.sets = 4;
+      processedExercise.reps = '6-8';
+    } else {
+      // Standard sets for variety style
+      processedExercise.sets = 3;
+      processedExercise.reps = '8-10';
+    }
+  } else if (goal === 'cardio') {
+    // Cardio-focused workout - always use seconds for cardio
+    if (style === 'focus') {
+      // More sets for cardio focus
+      processedExercise.sets = 4;
+      processedExercise.reps = '40-50 seconds';
+    } else {
+      processedExercise.sets = 3;
+      processedExercise.reps = '30-45 seconds';
+    }
+  } else {
+    // General fitness
+    // For cardio-category exercises, use seconds
+    if (processedExercise.category === 'cardio') {
+      if (style === 'focus') {
+        processedExercise.sets = 4;
+        processedExercise.reps = '30-40 seconds';
+      } else {
         processedExercise.sets = 3;
         processedExercise.reps = '30-45 seconds';
-      } else {
-        // General fitness
-        processedExercise.sets = 3;
-        processedExercise.reps = '10-12';
       }
-      
-      // Add tips
-      processedExercise.tips = [
-        "Keep proper form throughout the exercise",
-        "Breathe steadily during the movement",
-        "Focus on controlled movements"
-      ];
-      
-      return processedExercise;
-    });
+    } else {
+      // For strength exercises in general fitness, use reps
+      if (style === 'focus') {
+        processedExercise.sets = 4;
+        processedExercise.reps = '10-12';
+      } else {
+        processedExercise.sets = 3;
+        processedExercise.reps = '10-15';
+      }
+    }
+  }
+  
+  // Add tips
+  processedExercise.tips = [
+    "Keep proper form throughout the exercise",
+    "Breathe steadily during the movement",
+    "Focus on controlled movements"
+  ];
+  
+  return processedExercise;
+});
     
-    // Limit to a reasonable number based on duration (roughly 1 exercise per 5 mins)
-    const numberOfExercises = Math.max(3, Math.min(8, Math.floor(durationMinutes / 5)));
+    // Limit exercises based on duration and style
+    let numberOfExercises;
+    if (style === 'focus') {
+      // For focus style: fewer exercises (about 1 per 8-10 mins)
+      numberOfExercises = Math.max(3, Math.min(6, Math.floor(durationMinutes / 10)));
+    } else {
+      // For variety style: more exercises (about 1 per 4-5 mins)
+      numberOfExercises = Math.max(4, Math.min(12, Math.floor(durationMinutes / 5)));
+    }
+
+    console.log(`Selecting ${numberOfExercises} exercises for a ${durationMinutes}-minute ${style} workout`);
     
     // Shuffle the exercises to get a random selection
     const shuffledExercises = [...processedExercises].sort(() => Math.random() - 0.5);
@@ -158,7 +243,7 @@ router.post('/generate-workout', async (req, res) => {
       duration: durationMinutes,
       goal: goal,
       focus: focus,
-      experience: experience,
+      style: style || 'variety',
       equipment: equipment,
       exercises: selectedExercises
     };
@@ -172,88 +257,202 @@ router.post('/generate-workout', async (req, res) => {
   }
 });
 
-// Fallback workout generator function
-function generateFallbackWorkout(focus, goal, equipment, duration, experience) {
-  console.log("Generating fallback workout");
+// Add the fallback endpoint
+router.post('/generate-workout-fallback', async (req, res) => {
+  try {
+    const { focus, goal, equipment, duration, style } = req.body;
+    
+    // Call the existing fallback function
+    const workout = generateFallbackWorkout(focus, goal, equipment, parseInt(duration), style);
+    res.json(workout);
+    
+  } catch (err) {
+    console.error('Error in fallback workout generation:', err);
+    res.status(500).json({ error: 'Failed to generate fallback workout: ' + err.message });
+  }
+});
+
+// Update the fallback workout generator
+function generateFallbackWorkout(focus, goal, equipment, duration, style) {
+  console.log("Generating fallback workout with style:", style);
   
-  const fallbackExercises = [
-    {
-      id: 1,
-      name: "Push-Up",
-      description: "A bodyweight chest exercise",
-      muscleGroup: "chest",
-      equipment: "bodyweight",
-      difficulty: "beginner",
-      category: "strength",
-      instructions: "Keep your body straight and lower until elbows are at 90 degrees, then push back up.",
-      imageUrl: "/api/placeholder/150/150",
-      isCompound: true,
-      sets: 3,
-      reps: "10-12",
-      tips: [
-        "Keep your core tight throughout the movement",
-        "Don't let your hips sag",
-        "Focus on full range of motion"
-      ]
-    },
-    {
-      id: 2,
-      name: "Squat",
-      description: "A lower body compound exercise",
-      muscleGroup: "legs",
-      equipment: "bodyweight",
-      difficulty: "beginner",
-      category: "strength",
-      instructions: "Stand with feet shoulder-width apart, lower your body as if sitting in a chair, then stand back up.",
-      imageUrl: "/api/placeholder/150/150",
-      isCompound: true,
-      sets: 3,
-      reps: "12-15",
-      tips: [
-        "Keep your weight in your heels",
-        "Keep your chest up",
-        "Push your knees outward as you descend"
-      ]
-    },
-    {
-      id: 3,
-      name: "Plank",
-      description: "A core stabilizing exercise",
-      muscleGroup: "core",
-      equipment: "bodyweight",
-      difficulty: "beginner",
-      category: "strength",
-      instructions: "Hold a push-up position on your forearms, keeping your body in a straight line.",
-      imageUrl: "/api/placeholder/150/150",
-      isCompound: false,
-      sets: 3,
-      reps: "30 seconds",
-      tips: [
-        "Keep your core engaged",
-        "Don't let your hips rise or sag",
-        "Breathe steadily throughout the hold"
-      ]
-    },
-    {
-      id: 4,
-      name: "Jumping Jacks",
-      description: "A simple cardio exercise",
-      muscleGroup: "full_body",
-      equipment: "bodyweight",
-      difficulty: "beginner",
-      category: "cardio",
-      instructions: "Jump while spreading your legs and raising your arms overhead, then jump back to the starting position.",
-      imageUrl: "/api/placeholder/150/150",
-      isCompound: true,
-      sets: 3,
-      reps: "45 seconds",
-      tips: [
-        "Keep a steady rhythm",
-        "Land softly by bending your knees",
-        "Breathe rhythmically with the movement"
-      ]
-    }
-  ];
+  // Define exercises by muscle group for better organization
+  const exercisesByMuscleGroup = {
+    chest: [
+      {
+        id: 1,
+        name: "Push-Up",
+        description: "A bodyweight chest exercise",
+        muscleGroup: "chest",
+        equipment: "bodyweight",
+        category: "strength",
+        instructions: "Keep your body straight and lower until elbows are at 90 degrees, then push back up.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: true,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "10-12",
+        tips: [
+          "Keep your core tight throughout the movement",
+          "Don't let your hips sag",
+          "Focus on full range of motion"
+        ]
+      }
+    ],
+    legs: [
+      {
+        id: 2,
+        name: "Squat",
+        description: "A lower body compound exercise",
+        muscleGroup: "legs",
+        equipment: "bodyweight",
+        category: "strength",
+        instructions: "Stand with feet shoulder-width apart, lower your body as if sitting in a chair, then stand back up.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: true,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "12-15",
+        tips: [
+          "Keep your weight in your heels",
+          "Keep your chest up",
+          "Push your knees outward as you descend"
+        ]
+      },
+      {
+        id: 6,
+        name: "Lunges",
+        description: "Lower body exercise for legs and glutes",
+        muscleGroup: "legs",
+        equipment: "bodyweight",
+        category: "strength",
+        instructions: "Step forward with one leg, lowering your hips until both knees are bent at about 90 degrees.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: true,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "10-12 each leg",
+        tips: [
+          "Keep your upper body straight",
+          "Step far enough forward for knee alignment",
+          "Push back up using your front heel"
+        ]
+      }
+    ],
+    core: [
+      {
+        id: 3,
+        name: "Plank",
+        description: "A core stabilizing exercise",
+        muscleGroup: "core",
+        equipment: "bodyweight",
+        category: "strength",
+        instructions: "Hold a push-up position on your forearms, keeping your body in a straight line.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: false,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "30 seconds",
+        tips: [
+          "Keep your core engaged",
+          "Don't let your hips rise or sag",
+          "Breathe steadily throughout the hold"
+        ]
+      }
+    ],
+    full_body: [
+      {
+        id: 4,
+        name: "Jumping Jacks",
+        description: "A simple cardio exercise",
+        muscleGroup: "full_body",
+        equipment: "bodyweight",
+        category: "cardio",
+        instructions: "Jump while spreading your legs and raising your arms overhead, then jump back to the starting position.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: true,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "45 seconds",
+        tips: [
+          "Keep a steady rhythm",
+          "Land softly by bending your knees",
+          "Breathe rhythmically with the movement"
+        ]
+      },
+      {
+        id: 5,
+        name: "Mountain Climbers",
+        description: "Dynamic cardio and core exercise",
+        muscleGroup: "full_body",
+        equipment: "bodyweight",
+        category: "cardio",
+        instructions: "Start in a plank position. Alternate bringing each knee toward your chest in a running motion.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: true,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "40 seconds",
+        tips: [
+          "Keep your hips stable",
+          "Move your legs quickly for cardio effect",
+          "Maintain proper plank position"
+        ]
+      },
+      {
+        id: 7,
+        name: "Burpee",
+        description: "Full body exercise combining a push-up and jump",
+        muscleGroup: "full_body",
+        equipment: "bodyweight",
+        category: "cardio",
+        instructions: "Start standing, drop to a squat, kick feet back to plank, do a push-up, return to squat, then jump up.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: true,
+        sets: style === 'focus' ? 3 : 2,
+        reps: "10-12",
+        tips: [
+          "Modify by removing the push-up if needed",
+          "Focus on form over speed",
+          "Jump explosively at the top"
+        ]
+      }
+    ],
+    back: [
+      {
+        id: 8,
+        name: "Superman Hold",
+        description: "Back strengthening exercise",
+        muscleGroup: "back",
+        equipment: "bodyweight",
+        category: "strength",
+        instructions: "Lie face down with arms extended forward. Lift arms, chest, and legs off the ground simultaneously.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: false,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "20-30 seconds",
+        tips: [
+          "Focus on lifting through your back, not just arms and legs",
+          "Keep your neck neutral",
+          "Breathe steadily throughout"
+        ]
+      }
+    ],
+    arms: [
+      {
+        id: 9,
+        name: "Tricep Dips",
+        description: "Arm exercise focusing on triceps",
+        muscleGroup: "arms",
+        equipment: "bodyweight",
+        category: "strength",
+        instructions: "Use a chair or bench, place hands on edge with fingers forward, lower body by bending elbows.",
+        imageUrl: "/api/placeholder/150/150",
+        isCompound: false,
+        sets: style === 'focus' ? 4 : 3,
+        reps: "10-12",
+        tips: [
+          "Keep elbows pointed straight back",
+          "Keep shoulders down away from ears",
+          "Go as deep as comfortable"
+        ]
+      }
+    ]
+  };
 
   // Create workout name
   const focusText = focus.includes('full_body') 
@@ -266,13 +465,80 @@ function generateFallbackWorkout(focus, goal, equipment, duration, experience) {
     'general_fitness': 'Fitness'
   }[goal];
   
-  const experienceText = {
-    'beginner': 'Beginner',
-    'intermediate': 'Intermediate',
-    'advanced': 'Advanced'
-  }[experience];
+  const styleText = style === 'focus' ? 'Focus' : 'Variety';
+  const workoutName = `${duration}-min ${focusText} ${goalText} Workout (${styleText})`;
   
-  const workoutName = `${duration}-min ${experienceText} ${focusText} ${goalText} Workout`;
+  // Determine how many exercises to include based on duration and style
+  let exerciseCount;
+  if (style === 'focus') {
+    exerciseCount = Math.max(3, Math.min(4, Math.floor(duration / 10)));
+  } else {
+    exerciseCount = Math.max(4, Math.min(8, Math.floor(duration / 7)));
+  }
+  
+  // Select exercises based on focus
+  let selectedExercises = [];
+  
+  if (focus.includes('full_body')) {
+    // For full body workouts, include exercises from various muscle groups
+    const muscleGroups = Object.keys(exercisesByMuscleGroup);
+    
+    // First add 1-2 dedicated full body exercises
+    if (exercisesByMuscleGroup['full_body']) {
+      const fullBodyExercises = [...exercisesByMuscleGroup['full_body']]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, Math.min(2, exerciseCount / 2));
+      selectedExercises = selectedExercises.concat(fullBodyExercises);
+    }
+    
+    // Then add exercises from other muscle groups to create a balanced workout
+    const remainingCount = exerciseCount - selectedExercises.length;
+    
+    // Shuffle the muscle groups
+    const shuffledGroups = muscleGroups
+      .filter(group => group !== 'full_body')
+      .sort(() => Math.random() - 0.5);
+    
+    // Add one exercise from each muscle group until we reach our target
+    let groupIndex = 0;
+    while (selectedExercises.length < exerciseCount && groupIndex < shuffledGroups.length) {
+      const group = shuffledGroups[groupIndex];
+      if (exercisesByMuscleGroup[group] && exercisesByMuscleGroup[group].length > 0) {
+        // Take the first exercise from this group
+        const groupExercises = [...exercisesByMuscleGroup[group]].sort(() => Math.random() - 0.5);
+        selectedExercises.push(groupExercises[0]);
+      }
+      groupIndex++;
+    }
+  } else {
+    // For targeted workouts, use exercises from the requested focus areas
+    const targetGroups = focus.filter(f => exercisesByMuscleGroup[f]);
+    targetGroups.forEach(group => {
+      if (exercisesByMuscleGroup[group]) {
+        selectedExercises = selectedExercises.concat(exercisesByMuscleGroup[group]);
+      }
+    });
+    
+    // Shuffle and take the required number
+    selectedExercises = selectedExercises
+      .sort(() => Math.random() - 0.5)
+      .slice(0, exerciseCount);
+  }
+  
+  // Make sure we have enough exercises
+  if (selectedExercises.length < exerciseCount) {
+    // If we don't have enough, add random exercises from any muscle group
+    const allExercises = [].concat(...Object.values(exercisesByMuscleGroup));
+    const additionalExercises = allExercises
+      .filter(ex => !selectedExercises.some(selected => selected.id === ex.id))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, exerciseCount - selectedExercises.length);
+    
+    selectedExercises = selectedExercises.concat(additionalExercises);
+  }
+  
+  // Limit to the required count (in case we added too many)
+  selectedExercises = selectedExercises.slice(0, exerciseCount);
   
   // Create the workout object
   return {
@@ -280,9 +546,9 @@ function generateFallbackWorkout(focus, goal, equipment, duration, experience) {
     duration: duration,
     goal: goal,
     focus: focus,
-    experience: experience,
+    style: style || 'variety',
     equipment: equipment,
-    exercises: fallbackExercises
+    exercises: selectedExercises
   };
 }
 

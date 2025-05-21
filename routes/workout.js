@@ -1,3 +1,5 @@
+// routes/workout.js - Updated version without experience parameter
+
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
@@ -33,7 +35,7 @@ router.get('/workouts/:id', async (req, res) => {
 
 // POST a new workout
 router.post('/workouts', async (req, res) => {
-  const { name, duration, goal, focus, experience, equipment, exercises, userId } = req.body;
+  const { name, duration, goal, focus, equipment, exercises, userId, style } = req.body;
   try {
     const newWorkout = await prisma.workout.create({
       data: { 
@@ -41,9 +43,9 @@ router.post('/workouts', async (req, res) => {
         duration: parseInt(duration),
         goal,
         focus,
-        experience,
         equipment,
         exercises,
+        style: style || 'variety',
         userId: userId ? parseInt(userId) : null
       },
     });

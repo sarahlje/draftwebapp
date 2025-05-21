@@ -245,56 +245,129 @@ function validateForm() {
 
 // Show the generated workout on the page
 function displayWorkout(workout) {
-    const workoutResult = document.getElementById('workout-result');
-    workoutResult.innerHTML = ''; // Clear previous results
-    workoutResult.style.display = 'block';
+  const workoutResult = document.getElementById('workout-result');
+  workoutResult.innerHTML = ''; // Clear previous results
+  workoutResult.style.display = 'block';
 
-    const summaryHTML = `
-        <h3>${workout.name}</h3>
-        <div class="workout-summary">
-            <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
-            <p><strong>Goal:</strong> ${workout.goal}</p>
-            <p><strong>Duration:</strong> ${workout.duration} minutes</p>
-            <p><strong>Style:</strong> ${workout.style === 'focus' ? 'Focus (High Volume)' : 'Variety'}</p>
-        </div>
-        <div class="workout-actions">
-            <button id="regenerate-btn">Regenerate Workout</button>
-            <button id="save-workout-btn">Save Workout</button>
+  // Calculate total workout time based on exercises
+  let totalExerciseTime = 0;
+  workout.exercises.forEach(exercise => {
+    // Estimate time per set (in minutes)
+    let timePerSet = 1;
+    if (workout.goal === 'cardio' || exercise.reps.includes('seconds')) {
+      // For cardio, estimate based on seconds
+      const repString = exercise.reps;
+      let repTime = 30; // default value
+      
+      // Try to extract the number from strings like "40 seconds" or "30-45 seconds"
+      const timeMatch = repString.match(/(\d+)(-\d+)?\s*seconds/);
+      if (timeMatch && timeMatch[1]) {
+        repTime = parseInt(timeMatch[1]);
+      }
+      
+      timePerSet = (repTime / 60) + 0.5; // Add 30s rest between sets
+    } else {
+      // For strength/general, estimate 1.5-2 min per set
+      timePerSet = 2;
+    }
+    
+    // Calculate total time for this exercise (all sets)
+    const exerciseTime = exercise.sets * timePerSet;
+    totalExerciseTime += exerciseTime;
+  });
+  
+  // Round to nearest minute
+  totalExerciseTime = Math.round(totalExerciseTime);
+  
+  // Add warm-up and cool-down time
+  const warmupCooldownTime = 10; // 5 min each
+  const estimatedTotalTime = totalExerciseTime + warmupCooldownTime;
+
+  const summaryHTML = `
+      <h3>${workout.name}</h3>
+      <div class="workout-summary">
+          <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
+          <p><strong>Goal:</strong> ${workout.goal}</p>
+          <p><strong>Duration:</strong> ${workout.duration} minutes</p>
+          <p><strong>Style:</strong> ${workout.style === 'focus' ? 'Focus (High Volume)' : 'Variety'}</p>
+          <p><strong>Exercises:</strong> ${workout.exercises.length}</p>
+          <p><strong>Estimated Time:</strong> ${estimatedTotalTime} minutes (includes 10 min warm-up/cool-down)</p>
+      </div>
+      <div class="workout-actions">
+          <button id="regenerate-btn">Regenerate Workout</button>
+          <button id="save-workout-btn">Save Workout</button>
+      </div>
+  `;
+  workoutResult.insertAdjacentHTML('beforeend', summaryHTML);
+  
+  // Add recommended warm-up and cool-down
+  const warmupHTML = `
+    <div class="workout-section">
+      <h4>Recommended Warm-up (5 min)</h4>
+      <p>Start with 2-3 minutes of light cardio (jogging in place, jumping jacks) followed by dynamic stretches for the muscle groups you'll be working.</p>
+    </div>
+  `;
+  workoutResult.insertAdjacentHTML('beforeend', warmupHTML);
+  
+  // Add event listeners to buttons
+  document.getElementById('regenerate-btn').addEventListener('click', regenerateWorkout);
+  document.getElementById('save-workout-btn').addEventListener('click', () => saveWorkout(workout));
+
+  // Create container for exercises
+  const exercisesContainer = document.createElement('div');
+  exercisesContainer.className = 'exercises-container';
+  
+  // Add a header before the exercises
+  const exercisesHeader = document.createElement('h4');
+  exercisesHeader.textContent = 'Main Workout';
+  exercisesHeader.style.marginTop = '20px';
+  exercisesHeader.style.marginBottom = '15px';
+  workoutResult.appendChild(exercisesHeader);
+  
+  workout.exercises.forEach((exercise, index) => {
+    // Determine the correct rep/time display format
+    let repsDisplay;
+    
+    if (workout.goal === 'cardio' || exercise.reps.includes('seconds')) {
+        // For cardio workouts or exercises with seconds, show time
+        repsDisplay = exercise.reps;
+    } else {
+        // For strength/regular workouts, show reps
+        repsDisplay = `${exercise.reps} reps`;
+    }
+    
+    const exerciseHTML = `
+        <div class="exercise-card">
+            <h4>${index + 1}. ${exercise.name}</h4>
+            <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
+            <p>${exercise.sets} sets × ${repsDisplay}</p>
+            <button class="view-exercise-btn" data-index="${index}">Details</button>
         </div>
     `;
-    workoutResult.insertAdjacentHTML('beforeend', summaryHTML);
-    
-    // Add event listeners to buttons
-    document.getElementById('regenerate-btn').addEventListener('click', regenerateWorkout);
-    document.getElementById('save-workout-btn').addEventListener('click', () => saveWorkout(workout));
+    exercisesContainer.insertAdjacentHTML('beforeend', exerciseHTML);
+  });
+  
+  workoutResult.appendChild(exercisesContainer);
+  
+  // Add cool-down suggestion
+  const cooldownHTML = `
+    <div class="workout-section" style="margin-top: 20px;">
+      <h4>Recommended Cool-down (5 min)</h4>
+      <p>Finish with 5 minutes of static stretching, focusing on the muscles you worked. Hold each stretch for 20-30 seconds.</p>
+    </div>
+  `;
+  workoutResult.insertAdjacentHTML('beforeend', cooldownHTML);
 
-    // Create container for exercises
-    const exercisesContainer = document.createElement('div');
-    exercisesContainer.className = 'exercises-container';
-    workout.exercises.forEach((exercise, index) => {
-        const exerciseHTML = `
-            <div class="exercise-card">
-                <h4>${index + 1}. ${exercise.name}</h4>
-                <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
-                <p>${exercise.sets} sets × ${exercise.reps} ${workout.goal === 'cardio' ? 'seconds' : 'reps'}</p>
-                <button class="view-exercise-btn" data-index="${index}">Details</button>
-            </div>
-        `;
-        exercisesContainer.insertAdjacentHTML('beforeend', exerciseHTML);
+  // Save the workout globally so we can access it in showExerciseDetails
+  window.currentWorkout = workout;
+  
+  // Add event listeners to exercise detail buttons
+  document.querySelectorAll('.view-exercise-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const index = parseInt(button.dataset.index);
+        showExerciseDetails(index);
     });
-    
-    workoutResult.appendChild(exercisesContainer);
-
-    // Save the workout globally so we can access it in showExerciseDetails
-    window.currentWorkout = workout;
-    
-    // Add event listeners to exercise detail buttons
-    document.querySelectorAll('.view-exercise-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const index = parseInt(button.dataset.index);
-            showExerciseDetails(index);
-        });
-    });
+  });
 }
 
 // Regenerate workout using same parameters
@@ -527,16 +600,55 @@ function loadSavedWorkouts() {
     });
 }
 
-// Load a saved workout
-function loadSavedWorkout(index) {
+// function to load saved workouts
+function loadSavedWorkouts() {
+    const savedWorkoutsList = document.getElementById('saved-workouts-list');
     const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
-    if (index >= 0 && index < savedWorkouts.length) {
-        const workout = savedWorkouts[index];
-        displayWorkout(workout);
-        
-        // Scroll to the workout section
-        document.getElementById('workout-result').scrollIntoView({ behavior: 'smooth' });
+    
+    if (savedWorkouts.length === 0) {
+        savedWorkoutsList.innerHTML = '<p>No saved workouts found.</p>';
+        return;
     }
+    
+    savedWorkoutsList.innerHTML = ''; // Clear the list
+    
+    // Create the workouts list
+    savedWorkouts.forEach((workout, index) => {
+        const workoutCard = document.createElement('div');
+        workoutCard.className = 'saved-workout-card';
+        
+        // Format the date
+        const savedDate = new Date(workout.savedAt).toLocaleDateString();
+        
+        workoutCard.innerHTML = `
+            <h3>${workout.name}</h3>
+            <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
+            <p><strong>Goal:</strong> ${workout.goal}</p>
+            <p><strong>Duration:</strong> ${workout.duration} minutes</p>
+            <p><strong>Saved:</strong> ${savedDate}</p>
+            <div class="saved-workout-actions">
+                <button class="load-saved-workout-btn" data-index="${index}">Load Workout</button>
+                <button class="delete-saved-workout-btn" data-index="${index}">Delete</button>
+            </div>
+        `;
+        
+        savedWorkoutsList.appendChild(workoutCard);
+    });
+    
+    // Add event listeners to buttons
+    document.querySelectorAll('.load-saved-workout-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            loadSavedWorkout(index);
+        });
+    });
+    
+    document.querySelectorAll('.delete-saved-workout-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            deleteSavedWorkout(index);
+        });
+    });
 }
 
 // Delete a saved workout
