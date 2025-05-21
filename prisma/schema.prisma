@@ -37,23 +37,23 @@ enum Equipment {
   all
 }
 
-// Exercise model - reusable exercises library
+// Exercise model
 model Exercise {
-  id                   Int      @id @default(autoincrement())
-  name                 String   @unique
-  description          String?
-  muscleGroup          String
-  equipment            String?
-  difficulty           String
-  category             String
-  instructions         String?
-  imageUrl             String?
-  isCompound           Boolean  @default(false)
-  estimatedTimeInMinutes Int     @default(3)
-  tips                 String[] @default([])
-  createdAt            DateTime @default(now())
-  // New field to exclude from cardio workouts
-  excludeFromCardio    Boolean  @default(false)
+  id                     Int      @id @default(autoincrement())
+  name                   String   @unique
+  description            String?
+  muscleGroup            String
+  equipment              String?
+  // difficulty field removed
+  category               String
+  instructions           String?
+  imageUrl               String?
+  isCompound             Boolean  @default(false)
+  estimatedTimeInMinutes Int      @default(3)
+  tips                   String[] @default([])
+  createdAt              DateTime @default(now())
+  excludeFromCardio      Boolean  @default(false)
+  excludeFromStrength    Boolean  @default(false) // New field added
 }
 
 // Workout model - stores full generated workouts
