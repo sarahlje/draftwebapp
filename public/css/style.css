@@ -805,3 +805,66 @@ fieldset:last-of-type {
 select {
   margin-bottom: 15px;
 }
+
+/* Updated section and special option colors */
+
+/* Darker background for fieldset sections */
+fieldset {
+  background-color: #eaeaff; /* Slightly darker blue-purple */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode fieldset {
+  background-color: #2d2d40; /* Darker background in dark mode */
+}
+
+/* Lighter background for special options */
+.special-checkbox, .special-equipment {
+  background-color: #f8f8ff; /* Lighter than the fieldset background */
+  border: 1px solid rgba(108, 99, 255, 0.2); /* Light border for definition */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+body.dark-mode .special-checkbox, 
+body.dark-mode .special-equipment {
+  background-color: #3a3a5f; /* Lighter than the fieldset in dark mode */
+  border: 1px solid rgba(169, 159, 255, 0.2);
+}
+/* CSS adjustments for equipment groups */
+
+/* Adjust equipment grid to ensure items appear in the same row */
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Narrower minimum width */
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* Make sure each group has proper spacing */
+fieldset .checkbox-group {
+  margin-bottom: 20px;
+}
+
+fieldset .checkbox-group:last-of-type {
+  margin-bottom: 10px;
+}
+
+/* Adjust spacing for equipment categories */
+fieldset .checkbox-group h4 {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #e0e0ff;
+  padding-bottom: 4px;
+}
+
+body.dark-mode fieldset .checkbox-group h4 {
+  border-bottom: 1px solid #444458;
+}
+
+/* Special handling for smaller screens */
+@media (max-width: 500px) {
+  .equipment-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
+  }
+}
