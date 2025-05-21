@@ -27,7 +27,7 @@
         <legend>Fitness Goal</legend>
         <select id="fitnessGoal" name="fitness-goal">
           <option value="strength">Strength</option>
-          <option value="cardio">Cardiovascular Endurance</option>
+          <option value="cardio">Cardio</option>
           <option value="general_fitness">General Fitness</option>
         </select>
         <div class="option-description">
@@ -45,37 +45,27 @@
 
       <fieldset>
         <legend>Body Parts to Focus On</legend>
-        <label><input type="checkbox" name="workout-focus" value="chest" /> Chest</label>
-        <label><input type="checkbox" name="workout-focus" value="back" /> Back</label>
-        <label><input type="checkbox" name="workout-focus" value="legs" /> Legs</label>
-        <label><input type="checkbox" name="workout-focus" value="glutes" /> Glutes</label>
-        <label><input type="checkbox" name="workout-focus" value="arms" /> Arms</label>
-        <label><input type="checkbox" name="workout-focus" value="shoulders" /> Shoulders</label>
-        <label><input type="checkbox" name="workout-focus" value="core" /> Core</label>
-        <label><input type="checkbox" name="workout-focus" value="full_body" /> Full Body</label>
+        <label><input type="checkbox" name="workout-focus" value="chest" class="body-part-checkbox" /> Chest</label>
+        <label><input type="checkbox" name="workout-focus" value="back" class="body-part-checkbox" /> Back</label>
+        <label><input type="checkbox" name="workout-focus" value="legs" class="body-part-checkbox" /> Legs</label>
+        <label><input type="checkbox" name="workout-focus" value="glutes" class="body-part-checkbox" /> Glutes</label>
+        <label><input type="checkbox" name="workout-focus" value="arms" class="body-part-checkbox" /> Arms</label>
+        <label><input type="checkbox" name="workout-focus" value="shoulders" class="body-part-checkbox" /> Shoulders</label>
+        <label><input type="checkbox" name="workout-focus" value="core" class="body-part-checkbox" /> Core</label>
+        <label><input type="checkbox" name="workout-focus" value="full_body" id="full-body-checkbox" /> Full Body</label>
       </fieldset>
 
       <fieldset>
         <legend>Available Equipment</legend>
-        <label><input type="checkbox" name="equipment" value="bodyweight" /> Bodyweight Only</label>
-        <label><input type="checkbox" name="equipment" value="treadmill" /> Treadmill</label>
-        <label><input type="checkbox" name="equipment" value="dumbbells" /> Dumbbells</label>
-        <label><input type="checkbox" name="equipment" value="kettlebells" /> Kettlebells</label>
-        <label><input type="checkbox" name="equipment" value="barbell" /> Barbell</label>
-        <label><input type="checkbox" name="equipment" value="bench" /> Bench</label>
-        <label><input type="checkbox" name="equipment" value="cable_machines" /> Cable Machine</label>
-        <label><input type="checkbox" name="equipment" value="machine" /> Exercise Machine</label>
-        <label><input type="checkbox" name="equipment" value="any" /> Any</label>
-      </fieldset>
-
-      <fieldset>
-        <legend>Experience Level</legend>
-        <label for="experience-level">Choose your level:</label>
-        <select id="experience-level" name="experience-level">
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
+        <label><input type="checkbox" name="equipment" value="bodyweight" class="equipment-checkbox" /> Bodyweight Only</label>
+        <label><input type="checkbox" name="equipment" value="treadmill" class="equipment-checkbox" /> Treadmill</label>
+        <label><input type="checkbox" name="equipment" value="dumbbells" class="equipment-checkbox" /> Dumbbells</label>
+        <label><input type="checkbox" name="equipment" value="kettlebells" class="equipment-checkbox" /> Kettlebells</label>
+        <label><input type="checkbox" name="equipment" value="barbell" class="equipment-checkbox" /> Barbell</label>
+        <label><input type="checkbox" name="equipment" value="bench" class="equipment-checkbox" /> Bench</label>
+        <label><input type="checkbox" name="equipment" value="cable_machines" class="equipment-checkbox" /> Cable Machine</label>
+        <label><input type="checkbox" name="equipment" value="pull_up_bar" class="equipment-checkbox" /> Pull-up Bar</label>
+        <label><input type="checkbox" name="equipment" value="all" id="all-equipment-checkbox" /> All</label>
       </fieldset>
 
       <fieldset>

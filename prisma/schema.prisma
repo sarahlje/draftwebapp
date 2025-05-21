@@ -39,8 +39,8 @@ enum Equipment {
   barbell
   bench
   cable_machines
-  machine
-  any
+  pull_up_bar
+  all
 }
 
 // Exercise model - reusable exercises library
@@ -58,6 +58,8 @@ model Exercise {
   estimatedTimeInMinutes Int     @default(3)
   tips                 String[] @default([])
   createdAt            DateTime @default(now())
+  // New field to exclude from cardio workouts
+  excludeFromCardio    Boolean  @default(false)
 }
 
 // Workout model - stores full generated workouts
@@ -67,8 +69,8 @@ model Workout {
   duration   Int          // in minutes
   goal       Goal
   focus      Focus[]      // ✅ multiple body parts
-  experience Experience
   equipment  Equipment[]  // ✅ multiple equipment options
   exercises  Json
   createdAt  DateTime     @default(now())
+  style      String?      // 'variety' or 'focus'
 }

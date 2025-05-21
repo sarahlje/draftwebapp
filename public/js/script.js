@@ -42,6 +42,54 @@ function setupEventListeners() {
         });
     }
 
+    // Add event listeners for the "Full Body" checkbox
+    const fullBodyCheckbox = document.getElementById('full-body-checkbox');
+    const bodyPartCheckboxes = document.querySelectorAll('.body-part-checkbox');
+    
+    if (fullBodyCheckbox) {
+        fullBodyCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Uncheck and disable other body part checkboxes
+                bodyPartCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+        });
+        
+        // When any other body part checkbox is checked, uncheck Full Body
+        bodyPartCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked && fullBodyCheckbox.checked) {
+                    fullBodyCheckbox.checked = false;
+                }
+            });
+        });
+    }
+    
+    // Add event listeners for the "All" equipment checkbox
+    const allEquipmentCheckbox = document.getElementById('all-equipment-checkbox');
+    const equipmentCheckboxes = document.querySelectorAll('.equipment-checkbox');
+    
+    if (allEquipmentCheckbox) {
+        allEquipmentCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Uncheck other equipment checkboxes
+                equipmentCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+        });
+        
+        // When any other equipment checkbox is checked, uncheck All
+        equipmentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked && allEquipmentCheckbox.checked) {
+                    allEquipmentCheckbox.checked = false;
+                }
+            });
+        });
+    }
+
     document.getElementById('workout-form').addEventListener('submit', handleFormSubmit);
     
     // Modal close buttons
@@ -137,8 +185,7 @@ async function handleFormSubmit(e) {
         goal: formData.get('fitness-goal'),
         equipment: formData.getAll('equipment'),
         duration: formData.get('workout-duration'),
-        experience: formData.get('experience-level'),
-        style: formData.get('workout-style') || 'variety' // Include the new workout style parameter
+        style: formData.get('workout-style') || 'variety'
     };
     
     // Save preferences
@@ -364,11 +411,6 @@ function loadPreferences() {
             document.getElementById('duration-value').textContent = `${prefs.duration || 30} minutes`;
             // Update slider color based on saved value
             updateSliderColor(durationSlider);
-        }
-        
-        const experienceLevel = document.getElementById('experience-level');
-        if (experienceLevel) {
-            experienceLevel.value = prefs.experience || 'beginner';
         }
         
         const workoutStyle = document.getElementById('workout-style');
