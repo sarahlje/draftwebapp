@@ -73,6 +73,154 @@ header h1::after {
   color: inherit;
 }
 
+/* Form Styling */
+form {
+  background-color: #fff;
+  padding: 30px;
+  margin: 20px auto;
+  max-width: 600px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode form {
+  background-color: #2a2a3f;
+  color: var(--text-light);
+}
+
+/* Fieldset Styling (Sections) */
+fieldset {
+  border: none;
+  margin-bottom: 30px;
+  background-color: #f5f5ff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  padding-top: 40px; /* Space for legend */
+}
+
+body.dark-mode fieldset {
+  background-color: #333348;
+}
+
+/* Section Headers (Legend) */
+legend {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  position: absolute;
+  top: 15px;
+  left: 20px;
+}
+
+body.dark-mode legend {
+  color: var(--primary-color-dark);
+}
+
+/* Form Controls */
+form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+form input[type="number"],
+form select,
+form input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+body.dark-mode form input,
+body.dark-mode form select {
+  background-color: #3a3a5f;
+  border: 1px solid #444;
+  color: #fff;
+}
+
+/* Checkbox Grids */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+/* For smaller screens, reduce to 2 columns */
+@media (max-width: 500px) {
+  .checkbox-grid, .equipment-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Category Headers */
+.checkbox-group h4 {
+  font-size: 1rem; /* Medium size */
+  color: #555;
+  margin: 15px 0 10px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+  font-weight: 600; /* Semi-bold */
+}
+
+body.dark-mode .checkbox-group h4 {
+  color: #bbb;
+  border-bottom: 1px solid #444;
+}
+
+/* Checkbox Items */
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.checkbox-item label {
+  font-size: 0.95rem; /* Smaller than category headers */
+  font-weight: normal;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+/* Special Checkboxes */
+.special-checkbox, .special-equipment {
+  margin-top: 15px;
+  padding: 8px;
+  background-color: rgba(108, 99, 255, 0.1);
+  border-radius: 8px;
+  grid-column: 1 / -1;
+}
+
+body.dark-mode .special-checkbox,
+body.dark-mode .special-equipment {
+  background-color: rgba(169, 159, 255, 0.2);
+}
+
+/* Checkbox Groups */
+.checkbox-group:first-of-type {
+  margin-top: 5px;
+}
+
+.checkbox-group + .checkbox-group {
+  margin-top: 20px;
+}
+
 /* Option Descriptions */
 .option-description {
   background-color: #f5f5ff;
@@ -98,98 +246,6 @@ body.dark-mode .option-description {
 
 body.dark-mode .option-description strong {
   color: var(--primary-color-dark);
-}
-
-/* Form Styling */
-form {
-  background-color: #fff;
-  padding: 30px;
-  margin: 20px auto;
-  max-width: 600px;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
-
-body.dark-mode form {
-  background-color: #2a2a3f;
-  color: var(--text-light);
-}
-
-form label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-form input[type="number"],
-form select,
-form input[type="text"] {
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-form input[type="checkbox"] {
-  margin-right: 8px;
-}
-
-.checkbox-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-.checkbox-grid label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-fieldset {
-  border: none;
-  margin-bottom: 24px;
-}
-
-fieldset label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.3rem 0;
-}
-
-input[type="checkbox"] {
-  margin-right: 0.5rem;
-}
-
-legend {
-  font-weight: bold;
-  margin-bottom: 12px;
-  font-size: 1.1rem;
-  color: var(--primary-color);
-}
-
-body.dark-mode legend {
-  color: var(--primary-color-dark);
-}
-
-button#generate-btn {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 14px 24px;
-  font-size: 16px;
-  border-radius: 12px;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.3s;
-  box-shadow: 0 0 0 rgba(108, 99, 255, 0);
-}
-
-button#generate-btn:hover {
-  background-color: #5848e6;
-  box-shadow: 0 0 12px var(--primary-color);
 }
 
 /* Slider Styling */
@@ -285,6 +341,25 @@ body.dark-mode input[type="range"]::-moz-range-thumb:hover {
 #duration-value {
   min-width: 90px;
   font-weight: 500;
+}
+
+/* Generate Button */
+button#generate-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  font-size: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s;
+  box-shadow: 0 0 0 rgba(108, 99, 255, 0);
+}
+
+button#generate-btn:hover {
+  background-color: #5848e6;
+  box-shadow: 0 0 12px var(--primary-color);
 }
 
 /* Workout Output Section */
@@ -420,6 +495,7 @@ body.dark-mode #save-workout-btn:hover {
   padding: 20px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
 }
 
 .exercise-card:hover {
@@ -464,6 +540,23 @@ body.dark-mode .view-exercise-btn:hover {
   background-color: #9285ff;
 }
 
+/* Video icon for exercise cards with videos */
+.exercise-card.has-video::after {
+  content: "▶";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
 /* Modal Styles */
 #exercise-modal {
   display: none;
@@ -488,6 +581,7 @@ body.dark-mode .view-exercise-btn:hover {
   position: relative;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
   animation: popIn 0.3s ease-out;
+  margin: 10vh auto; /* Add margin from the top and center horizontally */
 }
 
 body.dark-mode .modal-content {
@@ -502,6 +596,8 @@ body.dark-mode .modal-content {
 
 .modal-content img {
   width: 100%;
+  max-height: 400px;
+  object-fit: cover;
   border-radius: 10px;
   margin-bottom: 16px;
 }
@@ -524,6 +620,54 @@ body.dark-mode .close-modal:hover {
   color: #ddd;
 }
 
+/* Video container in modal */
+#modal-exercise-video-container {
+  width: 100%;
+  margin-bottom: 16px;
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+#modal-exercise-video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+/* Exercise description in modal */
+.exercise-description {
+  margin-top: 10px;
+  font-style: italic;
+  color: #666;
+  background-color: #f9f9fb;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+body.dark-mode .exercise-description {
+  background-color: #3a3a5f;
+  color: #bbb;
+}
+
+/* Headers in modal */
+.modal-content h3 {
+  font-size: 1.1rem;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+body.dark-mode .modal-content h3 {
+  color: var(--primary-color-dark);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   form, .modal-content, #workout-output, #workout-result {
@@ -543,4 +687,121 @@ body.dark-mode .close-modal:hover {
   .workout-actions {
     flex-direction: column;
   }
+}
+
+/* Saved workouts styling */
+.saved-workouts-container {
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.view-saved-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  width: 100%;
+  font-size: 14px;
+}
+
+body.dark-mode .view-saved-btn {
+  background-color: var(--primary-color-dark);
+}
+
+#saved-workouts-list {
+  margin-top: 15px;
+}
+
+.saved-workout-card {
+  background-color: #f8f8ff;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .saved-workout-card {
+  background-color: #333348;
+}
+
+.saved-workout-card h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+body.dark-mode .saved-workout-card h3 {
+  color: var(--primary-color-dark);
+}
+
+.saved-workout-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.saved-workout-actions button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.load-saved-workout-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.delete-saved-workout-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Disclaimer styling */
+.disclaimer {
+  margin-top: 40px;
+  padding: 15px;
+  text-align: center;
+  border-top: 1px solid #eee;
+  font-size: 0.75rem; /* Small font size */
+  color: #777; /* Subtle grey color */
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.disclaimer p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Dark mode support */
+body.dark-mode .disclaimer {
+  border-top: 1px solid #444;
+  color: #999;
+}
+
+/* Add these CSS rules to your style.css file */
+
+/* Ensure consistent spacing under all section headers */
+fieldset legend + select,
+fieldset legend + .equipment-grid,
+fieldset legend + .option-description {
+  margin-top: 15px;  /* Add space between legend and first element */
+  display: block;
+}
+
+/* Adjust padding for fieldsets with selects */
+fieldset:first-of-type,
+fieldset:last-of-type {
+  padding-top: 45px; /* Slightly more padding for sections with dropdowns */
+}
+
+/* Make sure select elements have proper bottom margin */
+select {
+  margin-bottom: 15px;
 }

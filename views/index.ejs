@@ -35,7 +35,9 @@
           <p><strong>Cardio</strong>: Improves heart health and endurance with higher reps and shorter rest periods.</p>
           <p><strong>General Fitness</strong>: Balanced approach for overall health, combining strength and cardio elements.</p>
         </div>
+      </fieldset>
 
+      <fieldset>
         <legend>Time per Workout</legend>
         <div class="slider-container">
           <input type="range" id="workout-duration" name="workout-duration" min="10" max="90" step="5" value="30" />
@@ -45,32 +47,104 @@
 
       <fieldset>
         <legend>Body Parts to Focus On</legend>
-        <label><input type="checkbox" name="workout-focus" value="chest" class="body-part-checkbox" /> Chest</label>
-        <label><input type="checkbox" name="workout-focus" value="back" class="body-part-checkbox" /> Back</label>
-        <label><input type="checkbox" name="workout-focus" value="legs" class="body-part-checkbox" /> Legs</label>
-        <label><input type="checkbox" name="workout-focus" value="glutes" class="body-part-checkbox" /> Glutes</label>
-        <label><input type="checkbox" name="workout-focus" value="arms" class="body-part-checkbox" /> Arms</label>
-        <label><input type="checkbox" name="workout-focus" value="shoulders" class="body-part-checkbox" /> Shoulders</label>
-        <label><input type="checkbox" name="workout-focus" value="core" class="body-part-checkbox" /> Core</label>
-        <label><input type="checkbox" name="workout-focus" value="full_body" id="full-body-checkbox" /> Full Body</label>
+        
+        <!-- Organized muscle groups -->
+        <div class="checkbox-group">
+          <h4>Upper Body</h4>
+          <div class="checkbox-grid">
+            <div class="checkbox-item">
+              <input type="checkbox" id="chest-checkbox" name="workout-focus" value="chest" class="body-part-checkbox" />
+              <label for="chest-checkbox">Chest</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="back-checkbox" name="workout-focus" value="back" class="body-part-checkbox" />
+              <label for="back-checkbox">Back</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="arms-checkbox" name="workout-focus" value="arms" class="body-part-checkbox" />
+              <label for="arms-checkbox">Arms</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="shoulders-checkbox" name="workout-focus" value="shoulders" class="body-part-checkbox" />
+              <label for="shoulders-checkbox">Shoulders</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="checkbox-group">
+          <h4>Lower Body & Core</h4>
+          <div class="checkbox-grid">
+            <div class="checkbox-item">
+              <input type="checkbox" id="legs-checkbox" name="workout-focus" value="legs" class="body-part-checkbox" />
+              <label for="legs-checkbox">Legs</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="glutes-checkbox" name="workout-focus" value="glutes" class="body-part-checkbox" />
+              <label for="glutes-checkbox">Glutes</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="core-checkbox" name="workout-focus" value="core" class="body-part-checkbox" />
+              <label for="core-checkbox">Core</label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Full Body as a special option -->
+        <div class="checkbox-grid">
+          <div class="checkbox-item special-checkbox">
+            <input type="checkbox" id="full-body-checkbox" name="workout-focus" value="full_body" />
+            <label for="full-body-checkbox"><strong>Full Body</strong> (Workout targets all major muscle groups)</label>
+          </div>
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>Available Equipment</legend>
-        <label><input type="checkbox" name="equipment" value="bodyweight" class="equipment-checkbox" /> Bodyweight Only</label>
-        <label><input type="checkbox" name="equipment" value="treadmill" class="equipment-checkbox" /> Treadmill</label>
-        <label><input type="checkbox" name="equipment" value="dumbbells" class="equipment-checkbox" /> Dumbbells</label>
-        <label><input type="checkbox" name="equipment" value="kettlebells" class="equipment-checkbox" /> Kettlebells</label>
-        <label><input type="checkbox" name="equipment" value="barbell" class="equipment-checkbox" /> Barbell</label>
-        <label><input type="checkbox" name="equipment" value="bench" class="equipment-checkbox" /> Bench</label>
-        <label><input type="checkbox" name="equipment" value="cable_machines" class="equipment-checkbox" /> Cable Machine</label>
-        <label><input type="checkbox" name="equipment" value="pull_up_bar" class="equipment-checkbox" /> Pull-up Bar</label>
-        <label><input type="checkbox" name="equipment" value="all" id="all-equipment-checkbox" /> All</label>
+        
+        <div class="equipment-grid">
+          <div class="checkbox-item">
+            <input type="checkbox" id="bodyweight-checkbox" name="equipment" value="bodyweight" class="equipment-checkbox" />
+            <label for="bodyweight-checkbox">Bodyweight Only</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="treadmill-checkbox" name="equipment" value="treadmill" class="equipment-checkbox" />
+            <label for="treadmill-checkbox">Treadmill</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="dumbbells-checkbox" name="equipment" value="dumbbells" class="equipment-checkbox" />
+            <label for="dumbbells-checkbox">Dumbbells</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="kettlebells-checkbox" name="equipment" value="kettlebells" class="equipment-checkbox" />
+            <label for="kettlebells-checkbox">Kettlebells</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="barbell-checkbox" name="equipment" value="barbell" class="equipment-checkbox" />
+            <label for="barbell-checkbox">Barbell</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="bench-checkbox" name="equipment" value="bench" class="equipment-checkbox" />
+            <label for="bench-checkbox">Bench</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="cable-checkbox" name="equipment" value="cable_machines" class="equipment-checkbox" />
+            <label for="cable-checkbox">Cable Machine</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="pullup-checkbox" name="equipment" value="pull_up_bar" class="equipment-checkbox" />
+            <label for="pullup-checkbox">Pull-up Bar</label>
+          </div>
+          
+          <!-- All equipment as a special option -->
+          <div class="checkbox-item special-equipment">
+            <input type="checkbox" id="all-equipment-checkbox" name="equipment" value="all" />
+            <label for="all-equipment-checkbox"><strong>All Equipment</strong> (Access to a full gym)</label>
+          </div>
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>Workout Style</legend>
-        <label for="workout-style">Choose your preferred style:</label>
         <select id="workout-style" name="workout-style">
           <option value="variety">Variety (More exercises, standard sets)</option>
           <option value="focus">Focus (Fewer exercises, more sets)</option>
@@ -94,10 +168,17 @@
       <span class="close-modal">&times;</span>
       <h2 id="modal-exercise-name"></h2>
       <img id="modal-exercise-image" src="" alt="Exercise Image" />
+      <p id="modal-exercise-description" class="exercise-description"></p>
+      <h3>Instructions</h3>
       <p id="modal-exercise-instructions"></p>
+      <h3>Tips</h3>
       <ul id="modal-exercise-tips"></ul>
     </div>
   </div>
+
+  <footer class="disclaimer">
+    <p>Disclaimer: This website is created for learning purposes only. The information provided here should not be considered professional advice. Please note that we make no guarantees regarding the accuracy, completeness, or reliability of the contents of this website. Any actions you take based on the contents of this website are at your own risk. We are not liable for any losses or damages incurred from the use of this website.</p>
+  </footer>
 
   <script src="/js/script.js"></script>
 </body>

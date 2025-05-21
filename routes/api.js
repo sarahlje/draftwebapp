@@ -56,96 +56,94 @@ router.post('/generate-workout', async (req, res) => {
       return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
     }
 
-    // Get exercises that match the focus areas and equipment
-console.log("Getting exercises that match focus areas:", focus);
-console.log("And equipment:", equipment);
+    // Get exercises that match the focus areas and equipment and respect exclusion flags
+    console.log("Getting exercises that match focus areas:", focus);
+    console.log("And equipment:", equipment);
+    console.log("With goal:", goal);
 
-let exerciseQuery = {};
-
-if (focus.includes('full_body')) {
-  // For full body workouts, get a mix of exercises from all major muscle groups
-  console.log("Creating a full body workout with diverse exercises");
-  exerciseQuery = {
-    where: {
-      AND: [
-        // Match exercises that use the available equipment
-        ...(equipment.includes('all') 
-            ? [] 
-            : [{ equipment: { in: equipment } }])
-      ]
-    }
-  };
-} else {
-  // For targeted workouts, match the specific muscle groups
-  exerciseQuery = {
-    where: {
-      OR: [
-        // Match exercises with the specific muscle groups requested
-        { muscleGroup: { in: focus } }
-      ],
-      AND: [
-        // Match exercises that use the available equipment
-        ...(equipment.includes('all') 
-            ? [] 
-            : [{ equipment: { in: equipment } }])
-      ]
-    }
-  };
-}
-
-const allExercises = await prisma.exercise.findMany(exerciseQuery);
-
-// For full body workouts, ensure we have a balanced mix of exercises
-if (focus.includes('full_body') && allExercises.length > 0) {
-  // Group exercises by muscle group
-  const exercisesByMuscleGroup = {};
-  
-  allExercises.forEach(exercise => {
-    if (!exercisesByMuscleGroup[exercise.muscleGroup]) {
-      exercisesByMuscleGroup[exercise.muscleGroup] = [];
-    }
-    exercisesByMuscleGroup[exercise.muscleGroup].push(exercise);
-  });
-  
-  console.log(`Found exercises for ${Object.keys(exercisesByMuscleGroup).length} different muscle groups`);
-  
-  // If we have enough muscle groups, create a balanced selection
-  if (Object.keys(exercisesByMuscleGroup).length >= 3) {
-    let balancedExercises = [];
-    const mainMuscleGroups = ['chest', 'back', 'legs', 'core', 'arms', 'shoulders'];
-    
-    // First add exercises specifically tagged as full_body
-    if (exercisesByMuscleGroup['full_body']) {
-      // Add 1-2 full body exercises if available
-      const fullBodyCount = Math.min(2, exercisesByMuscleGroup['full_body'].length);
-      balancedExercises = balancedExercises.concat(
-        exercisesByMuscleGroup['full_body']
-          .sort(() => Math.random() - 0.5) // Shuffle
-          .slice(0, fullBodyCount)
-      );
-    }
-    
-    // Then add at least one exercise from each major muscle group
-    mainMuscleGroups.forEach(group => {
-      if (exercisesByMuscleGroup[group] && exercisesByMuscleGroup[group].length > 0) {
-        // Shuffle and take 1 exercise from this muscle group
-        const shuffled = [...exercisesByMuscleGroup[group]].sort(() => Math.random() - 0.5);
-        balancedExercises.push(shuffled[0]);
+    let exerciseQuery = {
+      where: {
+        AND: [
+          // Filter out exercises that should be excluded based on goal
+          goal === 'cardio' ? { excludeFromCardio: false } : {},
+          goal === 'strength' ? { excludeFromStrength: false } : {}
+        ]
       }
-    });
-    
-    // Replace allExercises with our balanced selection
-    allExercises.length = 0;
-    balancedExercises.forEach(ex => allExercises.push(ex));
-    
-    console.log(`Created balanced selection with ${allExercises.length} exercises`);
-  }
-}
+    };
 
-if (allExercises.length === 0) {
-  console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
-  return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
-}
+    if (focus.includes('full_body')) {
+      // For full body workouts, get a mix of exercises from all major muscle groups
+      console.log("Creating a full body workout with diverse exercises");
+      
+      // Add equipment filter to the existing AND array
+      if (!equipment.includes('all')) {
+        exerciseQuery.where.AND.push({ equipment: { in: equipment } });
+      }
+    } else {
+      // For targeted workouts, match the specific muscle groups
+      // Add muscle group filter
+      exerciseQuery.where.AND.push({ muscleGroup: { in: focus } });
+      
+      // Add equipment filter if not "all"
+      if (!equipment.includes('all')) {
+        exerciseQuery.where.AND.push({ equipment: { in: equipment } });
+      }
+    }
+
+    console.log("Exercise query:", JSON.stringify(exerciseQuery, null, 2));
+    const allExercises = await prisma.exercise.findMany(exerciseQuery);
+
+    // For full body workouts, ensure we have a balanced mix of exercises
+    if (focus.includes('full_body') && allExercises.length > 0) {
+      // Group exercises by muscle group
+      const exercisesByMuscleGroup = {};
+      
+      allExercises.forEach(exercise => {
+        if (!exercisesByMuscleGroup[exercise.muscleGroup]) {
+          exercisesByMuscleGroup[exercise.muscleGroup] = [];
+        }
+        exercisesByMuscleGroup[exercise.muscleGroup].push(exercise);
+      });
+      
+      console.log(`Found exercises for ${Object.keys(exercisesByMuscleGroup).length} different muscle groups`);
+      
+      // If we have enough muscle groups, create a balanced selection
+      if (Object.keys(exercisesByMuscleGroup).length >= 3) {
+        let balancedExercises = [];
+        const mainMuscleGroups = ['chest', 'back', 'legs', 'core', 'arms', 'shoulders'];
+        
+        // First add exercises specifically tagged as full_body
+        if (exercisesByMuscleGroup['full_body']) {
+          // Add 1-2 full body exercises if available
+          const fullBodyCount = Math.min(2, exercisesByMuscleGroup['full_body'].length);
+          balancedExercises = balancedExercises.concat(
+            exercisesByMuscleGroup['full_body']
+              .sort(() => Math.random() - 0.5) // Shuffle
+              .slice(0, fullBodyCount)
+          );
+        }
+        
+        // Then add at least one exercise from each major muscle group
+        mainMuscleGroups.forEach(group => {
+          if (exercisesByMuscleGroup[group] && exercisesByMuscleGroup[group].length > 0) {
+            // Shuffle and take 1 exercise from this muscle group
+            const shuffled = [...exercisesByMuscleGroup[group]].sort(() => Math.random() - 0.5);
+            balancedExercises.push(shuffled[0]);
+          }
+        });
+        
+        // Replace allExercises with our balanced selection
+        allExercises.length = 0;
+        balancedExercises.forEach(ex => allExercises.push(ex));
+        
+        console.log(`Created balanced selection with ${allExercises.length} exercises`);
+      }
+    }
+
+    if (allExercises.length === 0) {
+      console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
+      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
+    }
     // Create workout name
     const focusText = focus.includes('full_body') 
       ? 'Full Body' 

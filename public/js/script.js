@@ -272,8 +272,13 @@ function displayWorkout(workout) {
       ).join(' ');
   }
   
-  // Capitalize the goal
-  const formattedGoal = workout.goal.charAt(0).toUpperCase() + workout.goal.slice(1);
+  // Format the goal properly from snake_case to Title Case
+  let formattedGoal;
+  if (workout.goal === 'general_fitness') {
+    formattedGoal = 'General Fitness';
+  } else {
+    formattedGoal = workout.goal.charAt(0).toUpperCase() + workout.goal.slice(1);
+  }
 
   const summaryHTML = `
       <h3>${workout.name}</h3>
@@ -327,8 +332,11 @@ function displayWorkout(workout) {
         repsDisplay = `${exercise.reps} reps`;
     }
     
+    // Check if the exercise has a video
+    const hasVideo = exercise.videoUrl ? 'has-video' : '';
+    
     const exerciseHTML = `
-        <div class="exercise-card">
+        <div class="exercise-card ${hasVideo}">
             <h4>${index + 1}. ${exercise.name}</h4>
             <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
             <p>${exercise.sets} sets × ${repsDisplay}</p>
