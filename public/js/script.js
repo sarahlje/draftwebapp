@@ -249,49 +249,40 @@ function displayWorkout(workout) {
   workoutResult.innerHTML = ''; // Clear previous results
   workoutResult.style.display = 'block';
 
-  // Calculate total workout time based on exercises
-  let totalExerciseTime = 0;
-  workout.exercises.forEach(exercise => {
-    // Estimate time per set (in minutes)
-    let timePerSet = 1;
-    if (workout.goal === 'cardio' || exercise.reps.includes('seconds')) {
-      // For cardio, estimate based on seconds
-      const repString = exercise.reps;
-      let repTime = 30; // default value
+  // Format focus areas to be user-friendly
+  let formattedFocus;
+  if (Array.isArray(workout.focus)) {
+    // Convert focus areas from snake_case to Title Case
+    const formattedFocusArray = workout.focus.map(focus => {
+      // Handle full_body special case
+      if (focus === 'full_body') return 'Full Body';
       
-      // Try to extract the number from strings like "40 seconds" or "30-45 seconds"
-      const timeMatch = repString.match(/(\d+)(-\d+)?\s*seconds/);
-      if (timeMatch && timeMatch[1]) {
-        repTime = parseInt(timeMatch[1]);
-      }
-      
-      timePerSet = (repTime / 60) + 0.5; // Add 30s rest between sets
-    } else {
-      // For strength/general, estimate 1.5-2 min per set
-      timePerSet = 2;
-    }
+      // Convert other snake_case to Title Case
+      return focus.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+    });
     
-    // Calculate total time for this exercise (all sets)
-    const exerciseTime = exercise.sets * timePerSet;
-    totalExerciseTime += exerciseTime;
-  });
+    formattedFocus = formattedFocusArray.join(', ');
+  } else {
+    // Handle single focus as string
+    formattedFocus = workout.focus === 'full_body' ? 'Full Body' : 
+      workout.focus.split('_').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+  }
   
-  // Round to nearest minute
-  totalExerciseTime = Math.round(totalExerciseTime);
-  
-  // Add warm-up and cool-down time
-  const warmupCooldownTime = 10; // 5 min each
-  const estimatedTotalTime = totalExerciseTime + warmupCooldownTime;
+  // Capitalize the goal
+  const formattedGoal = workout.goal.charAt(0).toUpperCase() + workout.goal.slice(1);
 
   const summaryHTML = `
       <h3>${workout.name}</h3>
       <div class="workout-summary">
-          <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
-          <p><strong>Goal:</strong> ${workout.goal}</p>
+          <p><strong>Focus:</strong> ${formattedFocus}</p>
+          <p><strong>Goal:</strong> ${formattedGoal}</p>
           <p><strong>Duration:</strong> ${workout.duration} minutes</p>
           <p><strong>Style:</strong> ${workout.style === 'focus' ? 'Focus (High Volume)' : 'Variety'}</p>
           <p><strong>Exercises:</strong> ${workout.exercises.length}</p>
-          <p><strong>Estimated Time:</strong> ${estimatedTotalTime} minutes (includes 10 min warm-up/cool-down)</p>
       </div>
       <div class="workout-actions">
           <button id="regenerate-btn">Regenerate Workout</button>
