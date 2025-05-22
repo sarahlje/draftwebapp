@@ -53,11 +53,6 @@ header h1 {
   gap: 10px;
 }
 
-header h1::after {
-  content: '✨';
-  font-size: 1.5rem;
-  animation: twinkle 2s infinite ease-in-out;
-}
 
 @keyframes twinkle {
   0%, 100% { opacity: 0.5; transform: scale(1); }
