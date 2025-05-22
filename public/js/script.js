@@ -142,32 +142,42 @@ function setupEventListeners() {
         });
     }
     
-    // Add toggle button for saved workouts if there are any
+    // Initialize saved workouts button
+    initializeSavedWorkoutsButton();
+}
+
+// Initialize the saved workouts button
+function initializeSavedWorkoutsButton() {
     const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
     if (savedWorkouts.length > 0) {
         // Only add the button if it doesn't already exist
         if (!document.getElementById('view-saved-workouts-btn')) {
-            const button = document.createElement('button');
-            button.id = 'view-saved-workouts-btn';
-            button.textContent = 'View Saved Workouts';
-            button.classList.add('view-saved-btn');
-            button.addEventListener('click', toggleSavedWorkouts);
-            
-            const container = document.createElement('div');
-            container.className = 'saved-workouts-container';
-            container.appendChild(button);
-            
-            // Create div for workouts
-            const workoutsDiv = document.createElement('div');
-            workoutsDiv.id = 'saved-workouts-list';
-            workoutsDiv.style.display = 'none';
-            container.appendChild(workoutsDiv);
-            
-            // Insert after the form
-            const form = document.getElementById('workout-form');
-            form.parentNode.insertBefore(container, form.nextSibling);
+            createSavedWorkoutsSection();
         }
     }
+}
+
+// Create the saved workouts section
+function createSavedWorkoutsSection() {
+    const button = document.createElement('button');
+    button.id = 'view-saved-workouts-btn';
+    button.textContent = 'View Saved Workouts';
+    button.classList.add('view-saved-btn');
+    button.addEventListener('click', toggleSavedWorkouts);
+    
+    const container = document.createElement('div');
+    container.className = 'saved-workouts-container';
+    container.appendChild(button);
+    
+    // Create div for workouts
+    const workoutsDiv = document.createElement('div');
+    workoutsDiv.id = 'saved-workouts-list';
+    workoutsDiv.style.display = 'none';
+    container.appendChild(workoutsDiv);
+    
+    // Insert after the form
+    const form = document.getElementById('workout-form');
+    form.parentNode.insertBefore(container, form.nextSibling);
 }
 
 // Handle form submission to generate workout
@@ -422,7 +432,12 @@ function saveWorkout(workout) {
         // Save back to localStorage
         localStorage.setItem('saved-workouts', JSON.stringify(savedWorkouts));
         
-        alert('Workout saved! You can find your saved workouts in your browser\'s local storage.');
+        // Create or update the saved workouts button if it doesn't exist
+        if (!document.getElementById('view-saved-workouts-btn')) {
+            createSavedWorkoutsSection();
+        }
+        
+        alert('Workout saved! You can view your saved workouts using the button below the form.');
     } catch (error) {
         console.error('Error saving workout:', error);
         alert('An error occurred while saving the workout');
@@ -568,11 +583,32 @@ function loadSavedWorkouts() {
         // Format the date
         const savedDate = new Date(workout.savedAt).toLocaleDateString();
         
+        // Format focus properly
+        let formattedFocus = '';
+        if (Array.isArray(workout.focus)) {
+            formattedFocus = workout.focus.map(f => {
+                if (f === 'full_body') return 'Full Body';
+                return f.charAt(0).toUpperCase() + f.slice(1);
+            }).join(', ');
+        } else {
+            formattedFocus = workout.focus === 'full_body' ? 'Full Body' : 
+                workout.focus.charAt(0).toUpperCase() + workout.focus.slice(1);
+        }
+        
+        // Format goal properly
+        let formattedGoal = workout.goal;
+        if (workout.goal === 'general_fitness') {
+            formattedGoal = 'General Fitness';
+        } else {
+            formattedGoal = workout.goal.charAt(0).toUpperCase() + workout.goal.slice(1);
+        }
+        
         workoutCard.innerHTML = `
             <h3>${workout.name}</h3>
-            <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
-            <p><strong>Goal:</strong> ${workout.goal}</p>
+            <p><strong>Focus:</strong> ${formattedFocus}</p>
+            <p><strong>Goal:</strong> ${formattedGoal}</p>
             <p><strong>Duration:</strong> ${workout.duration} minutes</p>
+            <p><strong>Exercises:</strong> ${workout.exercises.length}</p>
             <p><strong>Saved:</strong> ${savedDate}</p>
             <div class="saved-workout-actions">
                 <button class="load-saved-workout-btn" data-index="${index}">Load Workout</button>
@@ -599,55 +635,27 @@ function loadSavedWorkouts() {
     });
 }
 
-// function to load saved workouts
-function loadSavedWorkouts() {
-    const savedWorkoutsList = document.getElementById('saved-workouts-list');
+// Load a specific saved workout and display it
+function loadSavedWorkout(index) {
     const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
     
-    if (savedWorkouts.length === 0) {
-        savedWorkoutsList.innerHTML = '<p>No saved workouts found.</p>';
-        return;
+    if (index >= 0 && index < savedWorkouts.length) {
+        const workout = savedWorkouts[index];
+        
+        // Display the workout
+        displayWorkout(workout);
+        
+        // Scroll to the workout result
+        document.getElementById('workout-result').scrollIntoView({ behavior: 'smooth' });
+        
+        // Hide the saved workouts list
+        document.getElementById('saved-workouts-list').style.display = 'none';
+        document.getElementById('view-saved-workouts-btn').textContent = 'View Saved Workouts';
+    } else {
+        alert('Workout not found. It may have been deleted.');
+        // Refresh the saved workouts list
+        loadSavedWorkouts();
     }
-    
-    savedWorkoutsList.innerHTML = ''; // Clear the list
-    
-    // Create the workouts list
-    savedWorkouts.forEach((workout, index) => {
-        const workoutCard = document.createElement('div');
-        workoutCard.className = 'saved-workout-card';
-        
-        // Format the date
-        const savedDate = new Date(workout.savedAt).toLocaleDateString();
-        
-        workoutCard.innerHTML = `
-            <h3>${workout.name}</h3>
-            <p><strong>Focus:</strong> ${Array.isArray(workout.focus) ? workout.focus.join(', ') : workout.focus}</p>
-            <p><strong>Goal:</strong> ${workout.goal}</p>
-            <p><strong>Duration:</strong> ${workout.duration} minutes</p>
-            <p><strong>Saved:</strong> ${savedDate}</p>
-            <div class="saved-workout-actions">
-                <button class="load-saved-workout-btn" data-index="${index}">Load Workout</button>
-                <button class="delete-saved-workout-btn" data-index="${index}">Delete</button>
-            </div>
-        `;
-        
-        savedWorkoutsList.appendChild(workoutCard);
-    });
-    
-    // Add event listeners to buttons
-    document.querySelectorAll('.load-saved-workout-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const index = parseInt(e.target.dataset.index);
-            loadSavedWorkout(index);
-        });
-    });
-    
-    document.querySelectorAll('.delete-saved-workout-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const index = parseInt(e.target.dataset.index);
-            deleteSavedWorkout(index);
-        });
-    });
 }
 
 // Delete a saved workout
@@ -672,11 +680,13 @@ function deleteSavedWorkout(index) {
             document.getElementById('saved-workouts-list').style.display = 'none';
             document.getElementById('view-saved-workouts-btn').textContent = 'View Saved Workouts';
             
-            // If there are no more saved workouts, remove the button as well
+            // Remove the entire saved workouts container since there are no more workouts
             const container = document.querySelector('.saved-workouts-container');
             if (container) {
                 container.remove();
             }
         }
+        
+        alert('Workout deleted successfully!');
     }
 }
