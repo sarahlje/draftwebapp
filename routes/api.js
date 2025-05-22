@@ -1,4 +1,4 @@
-// routes/api.js - Updated version with bodyweight exercises always included
+// routes/api.js - Fixed version that preserves database tips
 
 const express = require('express');
 const router = express.Router();
@@ -162,7 +162,7 @@ router.post('/generate-workout', async (req, res) => {
     const styleText = style === 'focus' ? 'Focus' : 'Variety';
     const workoutName = `${durationMinutes}-min ${focusText} ${goalText} Workout (${styleText})`;
     
-    // Process exercises - add sets and reps with better time allocation
+    // Process exercises - add sets and reps BUT PRESERVE EXISTING TIPS
     const processedExercises = allExercises.map(exercise => {
       const processedExercise = { ...exercise };
       
@@ -211,12 +211,15 @@ router.post('/generate-workout', async (req, res) => {
         }
       }
       
-      // Add tips
-      processedExercise.tips = [
-        "Keep proper form throughout the exercise",
-        "Breathe steadily during the movement",
-        "Focus on controlled movements"
-      ];
+      // PRESERVE EXISTING TIPS - only add generic tips if none exist
+      if (!processedExercise.tips || processedExercise.tips.length === 0) {
+        processedExercise.tips = [
+          "Keep proper form throughout the exercise",
+          "Breathe steadily during the movement",
+          "Focus on controlled movements"
+        ];
+      }
+      // If tips exist from database, keep them as-is
       
       return processedExercise;
     });
@@ -251,6 +254,7 @@ router.post('/generate-workout', async (req, res) => {
     };
     
     console.log(`Successfully generated workout with ${selectedExercises.length} exercises`);
+    console.log("Sample exercise tips:", selectedExercises[0]?.tips); // Debug log
     res.json(workout);
     
   } catch (err) {
@@ -274,12 +278,13 @@ router.post('/generate-workout-fallback', async (req, res) => {
   }
 });
 
-// Update the fallback workout generator to also always include bodyweight exercises
+// Update the fallback workout generator to also preserve tips where possible
 function generateFallbackWorkout(focus, goal, equipment, duration, style) {
   console.log("Generating fallback workout with style:", style);
   console.log("Equipment selected:", equipment);
   
   // Define exercises by muscle group for better organization
+  // These already have proper tips from the original script
   const exercisesByMuscleGroup = {
     chest: [
       {

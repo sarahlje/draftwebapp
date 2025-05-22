@@ -64,13 +64,114 @@ header h1::after {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+/* Updated theme toggle - moved to corner */
 .theme-toggle {
-  display: inline-flex;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .theme-toggle {
+  background: rgba(30, 30, 47, 0.9);
+  color: #bbb;
+}
+
+body.dark-mode .theme-toggle:hover {
+  background: rgba(30, 30, 47, 0.95);
+}
+
+/* Style the toggle switch */
+.theme-toggle input[type="checkbox"] {
+  appearance: none;
+  width: 40px;
+  height: 20px;
+  background: #ddd;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin: 0;
+}
+
+.theme-toggle input[type="checkbox"]:checked {
+  background: var(--primary-color);
+}
+
+body.dark-mode .theme-toggle input[type="checkbox"] {
+  background: #444;
+}
+
+body.dark-mode .theme-toggle input[type="checkbox"]:checked {
+  background: var(--primary-color-dark);
+}
+
+/* Toggle switch button */
+.theme-toggle input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}
+
+/* Add icons for sun/moon */
+.theme-toggle::before {
+  content: '☀️';
   font-size: 14px;
-  margin-top: 10px;
-  color: inherit;
+}
+
+body.dark-mode .theme-toggle::before {
+  content: '🌙';
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .theme-toggle {
+    top: 15px;
+    right: 15px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .theme-toggle input[type="checkbox"] {
+    width: 35px;
+    height: 18px;
+  }
+  
+  .theme-toggle input[type="checkbox"]::before {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .theme-toggle input[type="checkbox"]:checked::before {
+    transform: translateX(17px);
+  }
 }
 
 /* Form Styling */
@@ -258,6 +359,7 @@ body.dark-mode .option-description strong {
 
 input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 8px;
   background: #ddd;

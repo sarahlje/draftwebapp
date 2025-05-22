@@ -8,24 +8,24 @@
   <link rel="icon" href="https://em-content.zobj.net/source/microsoft-teams/363/crystal-ball_1f52e.png" />
 </head>
 <body>
-  <header>
-    <h1>
-      <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
-  Workout Wizard
-    </h1>
-    <p>Conjure up your perfect workout in seconds 🪄</p>
-    <p>Select your goals, focus areas, and equipment — then let the magic happen!</p>
-    
-    <!-- Add navigation -->
-    <nav style="margin: 20px 0;">
-      <a href="/about" style="color: var(--primary-color); text-decoration: none; font-weight: 600; margin-right: 20px;">About This App</a>
-    </nav>
-    
-    <label class="theme-toggle">
-      <input type="checkbox" id="theme-switch" onchange="document.body.classList.toggle('dark-mode')" />
-      Toggle Light/Dark Theme
-    </label>
-  </header>
+<header>
+  <h1>
+    <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
+    Workout Wizard
+  </h1>
+  <p>Conjure up your perfect workout in seconds 🪄</p>
+  <p>Select your goals, focus areas, and equipment — then let the magic happen!</p>
+  
+  <!-- Add navigation -->
+  <nav style="margin: 20px 0;">
+    <a href="/about" style="color: var(--primary-color); text-decoration: none; font-weight: 600; margin-right: 20px;">About This App</a>
+  </nav>
+  
+  <!-- Simplified theme toggle - now in corner via CSS -->
+  <div class="theme-toggle">
+    <input type="checkbox" id="theme-switch" />
+  </div>
+</header>
 
   <main>
     <form id="workout-form">
