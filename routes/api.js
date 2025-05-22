@@ -1,4 +1,4 @@
-// routes/api.js - Fixed version that preserves database tips
+// routes/api.js - Updated version with compound movements prioritized first
 
 const express = require('express');
 const router = express.Router();
@@ -236,11 +236,60 @@ router.post('/generate-workout', async (req, res) => {
 
     console.log(`Selecting ${numberOfExercises} exercises for a ${durationMinutes}-minute ${style} workout`);
     
-    // Shuffle the exercises to get a random selection
-    const shuffledExercises = [...processedExercises].sort(() => Math.random() - 0.5);
+    // **NEW: PRIORITIZE COMPOUND MOVEMENTS AT THE START**
+    // Separate compound and isolation exercises
+    const compoundExercises = processedExercises.filter(ex => ex.isCompound === true);
+    const isolationExercises = processedExercises.filter(ex => ex.isCompound === false);
     
-    // Take just what we need
-    const selectedExercises = shuffledExercises.slice(0, numberOfExercises);
+    console.log(`Found ${compoundExercises.length} compound and ${isolationExercises.length} isolation exercises`);
+    
+    // Shuffle each group separately
+    const shuffledCompound = [...compoundExercises].sort(() => Math.random() - 0.5);
+    const shuffledIsolation = [...isolationExercises].sort(() => Math.random() - 0.5);
+    
+    // Determine how many compound vs isolation exercises to include
+    let compoundCount, isolationCount;
+    
+    if (goal === 'strength') {
+      // For strength goals, prioritize compound movements more heavily
+      compoundCount = Math.min(shuffledCompound.length, Math.ceil(numberOfExercises * 0.7)); // 70% compound
+      isolationCount = numberOfExercises - compoundCount;
+    } else if (goal === 'cardio') {
+      // For cardio, still favor compound but allow more variety
+      compoundCount = Math.min(shuffledCompound.length, Math.ceil(numberOfExercises * 0.6)); // 60% compound
+      isolationCount = numberOfExercises - compoundCount;
+    } else {
+      // For general fitness, balanced approach but still compound-first
+      compoundCount = Math.min(shuffledCompound.length, Math.ceil(numberOfExercises * 0.6)); // 60% compound
+      isolationCount = numberOfExercises - compoundCount;
+    }
+    
+    // If we don't have enough compound exercises, fill with isolation
+    if (compoundCount > shuffledCompound.length) {
+      isolationCount += (compoundCount - shuffledCompound.length);
+      compoundCount = shuffledCompound.length;
+    }
+    
+    // If we don't have enough isolation exercises, add more compound
+    if (isolationCount > shuffledIsolation.length) {
+      const additionalCompound = Math.min(
+        shuffledCompound.length - compoundCount,
+        isolationCount - shuffledIsolation.length
+      );
+      compoundCount += additionalCompound;
+      isolationCount = shuffledIsolation.length;
+    }
+    
+    console.log(`Selecting ${compoundCount} compound and ${isolationCount} isolation exercises`);
+    
+    // Build the final exercise list: compound first, then isolation
+    const selectedExercises = [
+      ...shuffledCompound.slice(0, compoundCount),
+      ...shuffledIsolation.slice(0, isolationCount)
+    ];
+    
+    // Ensure we have the right number of exercises
+    const finalExercises = selectedExercises.slice(0, numberOfExercises);
     
     // Create the workout object
     const workout = {
@@ -250,11 +299,11 @@ router.post('/generate-workout', async (req, res) => {
       focus: focus,
       style: style || 'variety',
       equipment: equipment,
-      exercises: selectedExercises
+      exercises: finalExercises
     };
     
-    console.log(`Successfully generated workout with ${selectedExercises.length} exercises`);
-    console.log("Sample exercise tips:", selectedExercises[0]?.tips); // Debug log
+    console.log(`Successfully generated workout with ${finalExercises.length} exercises`);
+    console.log(`Compound exercises first: ${finalExercises.filter(ex => ex.isCompound).length} compound, ${finalExercises.filter(ex => !ex.isCompound).length} isolation`);
     res.json(workout);
     
   } catch (err) {
@@ -278,13 +327,12 @@ router.post('/generate-workout-fallback', async (req, res) => {
   }
 });
 
-// Update the fallback workout generator to also preserve tips where possible
+// Update the fallback workout generator to also prioritize compound movements
 function generateFallbackWorkout(focus, goal, equipment, duration, style) {
   console.log("Generating fallback workout with style:", style);
   console.log("Equipment selected:", equipment);
   
-  // Define exercises by muscle group for better organization
-  // These already have proper tips from the original script
+  // Define exercises by muscle group - now with proper isCompound flags
   const exercisesByMuscleGroup = {
     chest: [
       {
@@ -296,7 +344,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Keep your body straight and lower until elbows are at 90 degrees, then push back up.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true,
+        isCompound: true, // Compound movement
         sets: style === 'focus' ? 4 : 3,
         reps: "10-12",
         tips: [
@@ -316,7 +364,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Stand with feet shoulder-width apart, lower your body as if sitting in a chair, then stand back up.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true,
+        isCompound: true, // Compound movement
         sets: style === 'focus' ? 4 : 3,
         reps: "12-15",
         tips: [
@@ -334,7 +382,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Step forward with one leg, lowering your hips until both knees are bent at about 90 degrees.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true,
+        isCompound: true, // Compound movement
         sets: style === 'focus' ? 4 : 3,
         reps: "10-12 each leg",
         tips: [
@@ -354,7 +402,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Hold a push-up position on your forearms, keeping your body in a straight line.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: false,
+        isCompound: false, // Isolation movement
         sets: style === 'focus' ? 4 : 3,
         reps: "30 seconds",
         tips: [
@@ -374,7 +422,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "cardio",
         instructions: "Jump while spreading your legs and raising your arms overhead, then jump back to the starting position.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true,
+        isCompound: true, // Compound movement
         sets: style === 'focus' ? 4 : 3,
         reps: "45 seconds",
         tips: [
@@ -392,7 +440,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "cardio",
         instructions: "Start in a plank position. Alternate bringing each knee toward your chest in a running motion.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true,
+        isCompound: true, // Compound movement
         sets: style === 'focus' ? 4 : 3,
         reps: "40 seconds",
         tips: [
@@ -410,7 +458,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "cardio",
         instructions: "Start standing, drop to a squat, kick feet back to plank, do a push-up, return to squat, then jump up.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true,
+        isCompound: true, // Compound movement
         sets: style === 'focus' ? 3 : 2,
         reps: "10-12",
         tips: [
@@ -430,7 +478,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Lie face down with arms extended forward. Lift arms, chest, and legs off the ground simultaneously.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: false,
+        isCompound: false, // Isolation movement
         sets: style === 'focus' ? 4 : 3,
         reps: "20-30 seconds",
         tips: [
@@ -450,7 +498,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Use a chair or bench, place hands on edge with fingers forward, lower body by bending elbows.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: false,
+        isCompound: false, // Isolation movement
         sets: style === 'focus' ? 4 : 3,
         reps: "10-12",
         tips: [
@@ -484,69 +532,47 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
     exerciseCount = Math.max(4, Math.min(8, Math.floor(duration / 7)));
   }
   
-  // Select exercises based on focus - bodyweight exercises are always available in fallback
-  let selectedExercises = [];
+  // Select exercises based on focus
+  let allExercises = [];
   
   if (focus.includes('full_body')) {
     // For full body workouts, include exercises from various muscle groups
     const muscleGroups = Object.keys(exercisesByMuscleGroup);
-    
-    // First add 1-2 dedicated full body exercises
-    if (exercisesByMuscleGroup['full_body']) {
-      const fullBodyExercises = [...exercisesByMuscleGroup['full_body']]
-        .sort(() => Math.random() - 0.5)
-        .slice(0, Math.min(2, exerciseCount / 2));
-      selectedExercises = selectedExercises.concat(fullBodyExercises);
-    }
-    
-    // Then add exercises from other muscle groups to create a balanced workout
-    const remainingCount = exerciseCount - selectedExercises.length;
-    
-    // Shuffle the muscle groups
-    const shuffledGroups = muscleGroups
-      .filter(group => group !== 'full_body')
-      .sort(() => Math.random() - 0.5);
-    
-    // Add one exercise from each muscle group until we reach our target
-    let groupIndex = 0;
-    while (selectedExercises.length < exerciseCount && groupIndex < shuffledGroups.length) {
-      const group = shuffledGroups[groupIndex];
-      if (exercisesByMuscleGroup[group] && exercisesByMuscleGroup[group].length > 0) {
-        // Take the first exercise from this group
-        const groupExercises = [...exercisesByMuscleGroup[group]].sort(() => Math.random() - 0.5);
-        selectedExercises.push(groupExercises[0]);
+    muscleGroups.forEach(group => {
+      if (exercisesByMuscleGroup[group]) {
+        allExercises = allExercises.concat(exercisesByMuscleGroup[group]);
       }
-      groupIndex++;
-    }
+    });
   } else {
     // For targeted workouts, use exercises from the requested focus areas
     const targetGroups = focus.filter(f => exercisesByMuscleGroup[f]);
     targetGroups.forEach(group => {
       if (exercisesByMuscleGroup[group]) {
-        selectedExercises = selectedExercises.concat(exercisesByMuscleGroup[group]);
+        allExercises = allExercises.concat(exercisesByMuscleGroup[group]);
       }
     });
-    
-    // Shuffle and take the required number
-    selectedExercises = selectedExercises
-      .sort(() => Math.random() - 0.5)
-      .slice(0, exerciseCount);
   }
   
-  // Make sure we have enough exercises
-  if (selectedExercises.length < exerciseCount) {
-    // If we don't have enough, add random exercises from any muscle group
-    const allExercises = [].concat(...Object.values(exercisesByMuscleGroup));
-    const additionalExercises = allExercises
-      .filter(ex => !selectedExercises.some(selected => selected.id === ex.id))
-      .sort(() => Math.random() - 0.5)
-      .slice(0, exerciseCount - selectedExercises.length);
-    
-    selectedExercises = selectedExercises.concat(additionalExercises);
-  }
+  // **Apply compound-first logic to fallback workouts too**
+  const compoundExercises = allExercises.filter(ex => ex.isCompound === true);
+  const isolationExercises = allExercises.filter(ex => ex.isCompound === false);
   
-  // Limit to the required count (in case we added too many)
-  selectedExercises = selectedExercises.slice(0, exerciseCount);
+  // Shuffle each group
+  const shuffledCompound = [...compoundExercises].sort(() => Math.random() - 0.5);
+  const shuffledIsolation = [...isolationExercises].sort(() => Math.random() - 0.5);
+  
+  // Prioritize compound movements (60-70% of workout)
+  const compoundCount = Math.min(shuffledCompound.length, Math.ceil(exerciseCount * 0.6));
+  const isolationCount = Math.min(shuffledIsolation.length, exerciseCount - compoundCount);
+  
+  // Build final exercise list: compound first, then isolation
+  const selectedExercises = [
+    ...shuffledCompound.slice(0, compoundCount),
+    ...shuffledIsolation.slice(0, isolationCount)
+  ];
+  
+  // Limit to the required count
+  const finalExercises = selectedExercises.slice(0, exerciseCount);
   
   // Create the workout object
   return {
@@ -556,7 +582,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
     focus: focus,
     style: style || 'variety',
     equipment: equipment,
-    exercises: selectedExercises
+    exercises: finalExercises
   };
 }
 
