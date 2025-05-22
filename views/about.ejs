@@ -121,7 +121,6 @@
       background: #9285ff;
     }
     
-    /* Section headers */
     .section-title {
       color: var(--primary-color);
       margin-top: 0;
@@ -139,6 +138,22 @@
     body.dark-mode .feature-title {
       color: var(--primary-color-dark);
     }
+    
+    .storage-info-box {
+      background: #e8f4fd;
+      border: 1px solid #b3d9ff;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+    
+    body.dark-mode .storage-info-box {
+      background: #2a3f5f;
+      border-color: #4a6fa5;
+      color: var(--text-light);
+    }
   </style>
 </head>
 <body class="with-nav">
@@ -146,8 +161,9 @@
   <nav class="main-nav">
     <div class="nav-container">
       <a href="/" class="nav-logo">
-        <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" />
-        Workout Wizard
+        <img src="https://cdn-icons-png.flaticon.com/512/1680/1680365.png" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
+  Workout Wizard 
+  <img src="https://cdn-icons-png.freepik.com/512/9084/9084875.png" alt="Wand Icon" style="height: 30px; vertical-align: middle; margin-left: 10px;" />
       </a>
       
       <ul class="nav-links" id="nav-links">
@@ -167,8 +183,9 @@
 
   <header>
     <h1>
-      <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
-      About Workout Wizard
+      <img src="https://cdn-icons-png.flaticon.com/512/1680/1680365.png" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
+  Workout Wizard 
+  <img src="https://cdn-icons-png.freepik.com/512/9084/9084875.png" alt="Wand Icon" style="height: 30px; vertical-align: middle; margin-left: 10px;" />
     </h1>
   </header>
 
@@ -223,6 +240,64 @@
       </div>
     </section>
 
+    <section class="about-section">
+      <h2 class="section-title">Current Features</h2>
+      
+      <div class="features-detailed-grid">
+        <div>
+          <h3 class="feature-title">🏋️ Smart Workout Generation</h3>
+          <ul style="line-height: 1.6;">
+            <li>100+ exercises in our database</li>
+            <li>Customisable workout duration (10-90 minutes)</li>
+            <li>Multiple body part targeting</li>
+            <li>Equipment-based filtering</li>
+            <li>Two workout styles: Variety vs. Focus</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="feature-title">💾 Local Storage</h3>
+          <ul style="line-height: 1.6;">
+            <li>Save workouts to your browser</li>
+            <li>Quick access to favorite routines</li>
+            <li>Preference memory for faster setup</li>
+            <li>No account required</li>
+          </ul>
+          
+          <div class="storage-info-box">
+            <strong>📍 How Saved Workouts Work:</strong><br>
+            Your saved workouts are stored locally in your browser (not on our servers). This means:
+            <ul style="margin: 8px 0 0 20px; padding: 0;">
+              <li>✅ <strong>Private:</strong> Only you can access them</li>
+              <li>✅ <strong>No account needed:</strong> Works immediately</li>
+              <li>⚠️ <strong>Device-specific:</strong> Only available on this device/browser</li>
+              <li>⚠️ <strong>May be cleared:</strong> If you clear browser data or use incognito mode</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="feature-title">📚 Exercise Guidance</h3>
+          <ul style="line-height: 1.6;">
+            <li>Detailed instructions for each exercise</li>
+            <li>Form tips and safety advice</li>
+            <li>Exercise images for reference</li>
+            <li>Set and rep recommendations</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="feature-title">🎨 User Experience</h3>
+          <ul style="line-height: 1.6;">
+            <li>Clean, intuitive interface</li>
+            <li>Dark/light theme toggle</li>
+            <li>Mobile-responsive design</li>
+            <li>Fast, lightweight performance</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <section class="coming-soon-section">
       <h2 style="margin-top: 0;">🚀 Coming Soon</h2>
       <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px;">
@@ -265,7 +340,7 @@
     <section class="about-section">
       <h2 class="section-title">Our Mission</h2>
       <p style="font-size: 1.2rem; line-height: 1.6; text-align: center; margin: 20px 0;">
-        <em>"To eliminate decision fatigue and make effective fitness accessible, one workout at a time."</em>
+        <em>"To eliminate decision fatigue and make effective fitness accessible to busy professionals, one workout at a time."</em>
       </p>
       
       <div class="mission-quote">
@@ -354,34 +429,4 @@
     }
   </script>
 </body>
-</html><h3 class="feature-title">🏋️ Smart Workout Generation</h3>
-          <ul style="line-height: 1.6;">
-            <li>98+ exercises in our database</li>
-            <li>Customisable workout duration (10-90 minutes)</li>
-            <li>Multiple body part targeting</li>
-            <li>Equipment-based filtering</li>
-            <li>Two workout styles: Variety vs. Focus</li>
-          </ul>
-        </div>
-        
-        <div>
-          <h3 class="feature-title">💾 Local Storage</h3>
-          <ul style="line-height: 1.6;">
-            <li>Save workouts to your browser</li>
-            <li>Quick access to favorite routines</li>
-            <li>Preference memory for faster setup</li>
-            <li>No account required</li>
-          </ul>
-        </div>
-        
-        <div>
-          <h3 class="feature-title">📚 Exercise Guidance</h3>
-          <ul style="line-height: 1.6;">
-            <li>Detailed instructions for each exercise</li>
-            <li>Form tips and safety advice</li>
-            <li>Exercise images for reference</li>
-            <li>Set and rep recommendations</li>
-          </ul>
-        </div>
-        
-        <div>
+</html>
