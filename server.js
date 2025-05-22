@@ -34,6 +34,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// Route for about page
+app.get('/about', (req, res) => {
+  res.render('about');
+});
+
 // Import and use routes
 const workoutRoutes = require('./routes/workout.js');
 const apiRoutes = require('./routes/api.js');
