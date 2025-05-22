@@ -1,4 +1,4 @@
-// routes/api.js - Updated version with fixes for variety and time calculation
+// routes/api.js - Updated version with bodyweight exercises always included
 
 const express = require('express');
 const router = express.Router();
@@ -61,12 +61,26 @@ router.post('/generate-workout', async (req, res) => {
     console.log("And equipment:", equipment);
     console.log("With goal:", goal);
 
+    // Create equipment filter that ALWAYS includes bodyweight exercises
+    let equipmentFilter;
+    if (equipment.includes('all')) {
+      // If "all" is selected, no equipment filter needed
+      equipmentFilter = {};
+    } else {
+      // Always include bodyweight exercises, plus the selected equipment
+      const equipmentWithBodyweight = [...new Set([...equipment, 'bodyweight'])]; // Use Set to avoid duplicates
+      equipmentFilter = { equipment: { in: equipmentWithBodyweight } };
+      console.log("Equipment filter (including bodyweight):", equipmentWithBodyweight);
+    }
+
     let exerciseQuery = {
       where: {
         AND: [
           // Filter out exercises that should be excluded based on goal
           goal === 'cardio' ? { excludeFromCardio: false } : {},
-          goal === 'strength' ? { excludeFromStrength: false } : {}
+          goal === 'strength' ? { excludeFromStrength: false } : {},
+          // Add equipment filter
+          equipmentFilter
         ]
       }
     };
@@ -74,20 +88,9 @@ router.post('/generate-workout', async (req, res) => {
     if (focus.includes('full_body')) {
       // For full body workouts, get a mix of exercises from all major muscle groups
       console.log("Creating a full body workout with diverse exercises");
-      
-      // Add equipment filter to the existing AND array
-      if (!equipment.includes('all')) {
-        exerciseQuery.where.AND.push({ equipment: { in: equipment } });
-      }
     } else {
       // For targeted workouts, match the specific muscle groups
-      // Add muscle group filter
       exerciseQuery.where.AND.push({ muscleGroup: { in: focus } });
-      
-      // Add equipment filter if not "all"
-      if (!equipment.includes('all')) {
-        exerciseQuery.where.AND.push({ equipment: { in: equipment } });
-      }
     }
 
     console.log("Exercise query:", JSON.stringify(exerciseQuery, null, 2));
@@ -144,6 +147,7 @@ router.post('/generate-workout', async (req, res) => {
       console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
       return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
     }
+    
     // Create workout name
     const focusText = focus.includes('full_body') 
       ? 'Full Body' 
@@ -158,64 +162,64 @@ router.post('/generate-workout', async (req, res) => {
     const styleText = style === 'focus' ? 'Focus' : 'Variety';
     const workoutName = `${durationMinutes}-min ${focusText} ${goalText} Workout (${styleText})`;
     
-// Process exercises - add sets and reps with better time allocation
-const processedExercises = allExercises.map(exercise => {
-  const processedExercise = { ...exercise };
-  
-  // Calculate sets based on goal, duration, and style
-  if (goal === 'strength') {
-    // Strength-focused workout
-    if (style === 'focus') {
-      // More sets for focus style
-      processedExercise.sets = 4;
-      processedExercise.reps = '6-8';
-    } else {
-      // Standard sets for variety style
-      processedExercise.sets = 3;
-      processedExercise.reps = '8-10';
-    }
-  } else if (goal === 'cardio') {
-    // Cardio-focused workout - always use seconds for cardio
-    if (style === 'focus') {
-      // More sets for cardio focus
-      processedExercise.sets = 4;
-      processedExercise.reps = '40-50 seconds';
-    } else {
-      processedExercise.sets = 3;
-      processedExercise.reps = '30-45 seconds';
-    }
-  } else {
-    // General fitness
-    // For cardio-category exercises, use seconds
-    if (processedExercise.category === 'cardio') {
-      if (style === 'focus') {
-        processedExercise.sets = 4;
-        processedExercise.reps = '30-40 seconds';
+    // Process exercises - add sets and reps with better time allocation
+    const processedExercises = allExercises.map(exercise => {
+      const processedExercise = { ...exercise };
+      
+      // Calculate sets based on goal, duration, and style
+      if (goal === 'strength') {
+        // Strength-focused workout
+        if (style === 'focus') {
+          // More sets for focus style
+          processedExercise.sets = 4;
+          processedExercise.reps = '6-8';
+        } else {
+          // Standard sets for variety style
+          processedExercise.sets = 3;
+          processedExercise.reps = '8-10';
+        }
+      } else if (goal === 'cardio') {
+        // Cardio-focused workout - always use seconds for cardio
+        if (style === 'focus') {
+          // More sets for cardio focus
+          processedExercise.sets = 4;
+          processedExercise.reps = '40-50 seconds';
+        } else {
+          processedExercise.sets = 3;
+          processedExercise.reps = '30-45 seconds';
+        }
       } else {
-        processedExercise.sets = 3;
-        processedExercise.reps = '30-45 seconds';
+        // General fitness
+        // For cardio-category exercises, use seconds
+        if (processedExercise.category === 'cardio') {
+          if (style === 'focus') {
+            processedExercise.sets = 4;
+            processedExercise.reps = '30-40 seconds';
+          } else {
+            processedExercise.sets = 3;
+            processedExercise.reps = '30-45 seconds';
+          }
+        } else {
+          // For strength exercises in general fitness, use reps
+          if (style === 'focus') {
+            processedExercise.sets = 4;
+            processedExercise.reps = '10-12';
+          } else {
+            processedExercise.sets = 3;
+            processedExercise.reps = '10-15';
+          }
+        }
       }
-    } else {
-      // For strength exercises in general fitness, use reps
-      if (style === 'focus') {
-        processedExercise.sets = 4;
-        processedExercise.reps = '10-12';
-      } else {
-        processedExercise.sets = 3;
-        processedExercise.reps = '10-15';
-      }
-    }
-  }
-  
-  // Add tips
-  processedExercise.tips = [
-    "Keep proper form throughout the exercise",
-    "Breathe steadily during the movement",
-    "Focus on controlled movements"
-  ];
-  
-  return processedExercise;
-});
+      
+      // Add tips
+      processedExercise.tips = [
+        "Keep proper form throughout the exercise",
+        "Breathe steadily during the movement",
+        "Focus on controlled movements"
+      ];
+      
+      return processedExercise;
+    });
     
     // Limit exercises based on duration and style
     let numberOfExercises;
@@ -270,9 +274,10 @@ router.post('/generate-workout-fallback', async (req, res) => {
   }
 });
 
-// Update the fallback workout generator
+// Update the fallback workout generator to also always include bodyweight exercises
 function generateFallbackWorkout(focus, goal, equipment, duration, style) {
   console.log("Generating fallback workout with style:", style);
+  console.log("Equipment selected:", equipment);
   
   // Define exercises by muscle group for better organization
   const exercisesByMuscleGroup = {
@@ -474,7 +479,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
     exerciseCount = Math.max(4, Math.min(8, Math.floor(duration / 7)));
   }
   
-  // Select exercises based on focus
+  // Select exercises based on focus - bodyweight exercises are always available in fallback
   let selectedExercises = [];
   
   if (focus.includes('full_body')) {
