@@ -3,6 +3,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadExerciseDatabase();
     loadPreferences();
     setupEventListeners();
+    
+    // Check if we should show saved workouts based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('show') === 'saved') {
+        // Wait a bit for the page to load, then show saved workouts
+        setTimeout(() => {
+            const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
+            if (savedWorkouts.length > 0) {
+                if (!document.getElementById('view-saved-workouts-btn')) {
+                    createSavedWorkoutsSection();
+                }
+                toggleSavedWorkouts();
+                
+                // Scroll to saved workouts section
+                setTimeout(() => {
+                    const savedSection = document.querySelector('.saved-workouts-container');
+                    if (savedSection) {
+                        savedSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 200);
+            }
+        }, 500);
+    }
 });
 
 // Global variable to store exercises
@@ -175,9 +198,9 @@ function createSavedWorkoutsSection() {
     workoutsDiv.style.display = 'none';
     container.appendChild(workoutsDiv);
     
-    // Insert after the form
-    const form = document.getElementById('workout-form');
-    form.parentNode.insertBefore(container, form.nextSibling);
+    // Insert after the main element
+    const main = document.querySelector('main');
+    main.appendChild(container);
 }
 
 // Handle form submission to generate workout
@@ -437,10 +460,27 @@ function saveWorkout(workout) {
             createSavedWorkoutsSection();
         }
         
-        alert('Workout saved! You can view your saved workouts using the button below the form.');
+        // Update navigation indicator
+        updateSavedWorkoutsNavIndicator();
+        
+        alert('Workout saved! You can view your saved workouts using the navigation or button below.');
     } catch (error) {
         console.error('Error saving workout:', error);
         alert('An error occurred while saving the workout');
+    }
+}
+
+// Update saved workouts navigation indicator
+function updateSavedWorkoutsNavIndicator() {
+    const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
+    const savedWorkoutsNav = document.getElementById('saved-workouts-nav');
+    
+    if (savedWorkoutsNav) {
+        if (savedWorkouts.length > 0) {
+            savedWorkoutsNav.classList.add('has-saved-workouts');
+        } else {
+            savedWorkoutsNav.classList.remove('has-saved-workouts');
+        }
     }
 }
 
@@ -671,6 +711,9 @@ function deleteSavedWorkout(index) {
         
         // Save back to localStorage
         localStorage.setItem('saved-workouts', JSON.stringify(savedWorkouts));
+        
+        // Update navigation indicator
+        updateSavedWorkoutsNavIndicator();
         
         // Reload the list
         loadSavedWorkouts();

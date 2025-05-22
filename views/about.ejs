@@ -121,19 +121,6 @@
       background: #9285ff;
     }
     
-    /* Navigation link styling */
-    .nav-link {
-      color: var(--primary-color);
-      text-decoration: none;
-      margin-right: 20px;
-      font-weight: 600;
-      transition: color 0.3s;
-    }
-    
-    body.dark-mode .nav-link {
-      color: var(--primary-color-dark);
-    }
-    
     /* Section headers */
     .section-title {
       color: var(--primary-color);
@@ -153,30 +140,36 @@
       color: var(--primary-color-dark);
     }
   </style>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KNWD8164X5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-KNWD8164X5');
-</script>
 </head>
-<body>
+<body class="with-nav">
+  <!-- Navigation Bar -->
+  <nav class="main-nav">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" />
+        Workout Wizard
+      </a>
+      
+      <ul class="nav-links" id="nav-links">
+        <li><a href="/" class="nav-link">Generate Workout</a></li>
+        <li><a href="#" class="nav-link" id="saved-workouts-nav">Saved Workouts</a></li>
+        <li><a href="/about" class="nav-link active">About</a></li>
+      </ul>
+      
+      <button class="mobile-nav-toggle" id="mobile-nav-toggle">☰</button>
+    </div>
+  </nav>
+
+  <!-- Theme toggle in corner -->
+  <div class="theme-toggle">
+    <input type="checkbox" id="theme-switch" />
+  </div>
+
   <header>
     <h1>
-     <img src="https://cdn-icons-png.flaticon.com/512/1680/1680365.png" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
-      About Workout Wizard <img src="https://cdn-icons-png.freepik.com/512/9084/9084875.png" alt="Wand Icon" style="height: 50px; vertical-align: middle" />
+      <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
+      About Workout Wizard
     </h1>
-    <nav style="margin-top: 20px;">
-      <a href="/" class="nav-link">← Back to Workout Generator</a>
-    </nav>
-    
-    <!-- Theme toggle in corner -->
-    <div class="theme-toggle">
-      <input type="checkbox" id="theme-switch" />
-    </div>
   </header>
 
   <main style="max-width: 800px; margin: 0 auto; padding: 20px;">
@@ -230,53 +223,6 @@
       </div>
     </section>
 
-    <section class="about-section">
-      <h2 class="section-title">Current Features</h2>
-      
-      <div class="features-detailed-grid">
-        <div>
-          <h3 class="feature-title">🏋️ Smart Workout Generation</h3>
-          <ul style="line-height: 1.6;">
-            <li>98+ exercises in our database</li>
-            <li>Customisable workout duration (10-90 minutes)</li>
-            <li>Multiple body part targeting</li>
-            <li>Equipment-based filtering</li>
-            <li>Two workout styles: Variety vs. Focus</li>
-          </ul>
-        </div>
-        
-        <div>
-          <h3 class="feature-title">💾 Local Storage</h3>
-          <ul style="line-height: 1.6;">
-            <li>Save workouts to your browser</li>
-            <li>Quick access to favorite routines</li>
-            <li>Preference memory for faster setup</li>
-            <li>No account required</li>
-          </ul>
-        </div>
-        
-        <div>
-          <h3 class="feature-title">📚 Exercise Guidance</h3>
-          <ul style="line-height: 1.6;">
-            <li>Detailed instructions for each exercise</li>
-            <li>Form tips and safety advice</li>
-            <li>Exercise images for reference</li>
-            <li>Set and rep recommendations</li>
-          </ul>
-        </div>
-        
-        <div>
-          <h3 class="feature-title">🎨 User Experience</h3>
-          <ul style="line-height: 1.6;">
-            <li>Clean, intuitive interface</li>
-            <li>Dark/light theme toggle</li>
-            <li>Mobile-responsive design</li>
-            <li>Fast, lightweight performance</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
     <section class="coming-soon-section">
       <h2 style="margin-top: 0;">🚀 Coming Soon</h2>
       <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px;">
@@ -316,6 +262,21 @@
       </div>
     </section>
 
+    <section class="about-section">
+      <h2 class="section-title">Our Mission</h2>
+      <p style="font-size: 1.2rem; line-height: 1.6; text-align: center; margin: 20px 0;">
+        <em>"To eliminate decision fatigue and make effective fitness accessible, one workout at a time."</em>
+      </p>
+      
+      <div class="mission-quote">
+        <p style="line-height: 1.6; margin: 0;">
+          We believe that staying fit shouldn't require a degree in exercise science or hours of workout planning. 
+          By combining smart algorithms with evidence-based fitness principles, we're making it possible for anyone 
+          to walk into the gym with confidence, knowing exactly what to do to reach their goals.
+        </p>
+      </div>
+    </section>
+
     <section class="about-section cta-section">
       <h2 class="section-title">Ready to Transform Your Workouts?</h2>
       <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px;">
@@ -332,6 +293,43 @@
   </footer>
 
   <script>
+    // Navigation functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Mobile navigation toggle
+      const mobileToggle = document.getElementById('mobile-nav-toggle');
+      const navLinks = document.getElementById('nav-links');
+      
+      if (mobileToggle && navLinks) {
+        mobileToggle.addEventListener('click', function() {
+          navLinks.classList.toggle('active');
+        });
+        
+        // Close mobile nav when clicking on a link
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', function() {
+            navLinks.classList.remove('active');
+          });
+        });
+      }
+      
+      // Handle saved workouts navigation click - redirect to home page
+      const savedWorkoutsNav = document.getElementById('saved-workouts-nav');
+      if (savedWorkoutsNav) {
+        savedWorkoutsNav.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Check if there are saved workouts
+          const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
+          if (savedWorkouts.length > 0) {
+            // Redirect to home page with a flag to show saved workouts
+            window.location.href = '/?show=saved';
+          } else {
+            alert('No saved workouts found. Generate and save a workout first!');
+          }
+        });
+      }
+    });
+    
     // Theme toggle functionality
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -356,4 +354,34 @@
     }
   </script>
 </body>
-</html>
+</html><h3 class="feature-title">🏋️ Smart Workout Generation</h3>
+          <ul style="line-height: 1.6;">
+            <li>98+ exercises in our database</li>
+            <li>Customisable workout duration (10-90 minutes)</li>
+            <li>Multiple body part targeting</li>
+            <li>Equipment-based filtering</li>
+            <li>Two workout styles: Variety vs. Focus</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="feature-title">💾 Local Storage</h3>
+          <ul style="line-height: 1.6;">
+            <li>Save workouts to your browser</li>
+            <li>Quick access to favorite routines</li>
+            <li>Preference memory for faster setup</li>
+            <li>No account required</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="feature-title">📚 Exercise Guidance</h3>
+          <ul style="line-height: 1.6;">
+            <li>Detailed instructions for each exercise</li>
+            <li>Form tips and safety advice</li>
+            <li>Exercise images for reference</li>
+            <li>Set and rep recommendations</li>
+          </ul>
+        </div>
+        
+        <div>

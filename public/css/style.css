@@ -965,3 +965,187 @@ body.dark-mode fieldset .checkbox-group h4 {
     grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
   }
 }
+
+/* Add this CSS to your public/css/style.css file */
+
+/* Navigation Bar Styles */
+.main-nav {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(108, 99, 255, 0.1);
+  padding: 15px 0;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .main-nav {
+  background: rgba(30, 30, 47, 0.95);
+  border-bottom: 1px solid rgba(169, 159, 255, 0.2);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 1.2rem;
+  transition: color 0.3s;
+}
+
+body.dark-mode .nav-logo {
+  color: var(--primary-color-dark);
+}
+
+.nav-logo:hover {
+  color: #5848e6;
+}
+
+body.dark-mode .nav-logo:hover {
+  color: #9285ff;
+}
+
+.nav-logo img {
+  height: 30px;
+  width: 30px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-link {
+  color: #666;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+body.dark-mode .nav-link {
+  color: #bbb;
+}
+
+.nav-link:hover {
+  color: var(--primary-color);
+  background: rgba(108, 99, 255, 0.1);
+}
+
+body.dark-mode .nav-link:hover {
+  color: var(--primary-color-dark);
+  background: rgba(169, 159, 255, 0.1);
+}
+
+.nav-link.active {
+  color: var(--primary-color);
+  background: rgba(108, 99, 255, 0.15);
+  font-weight: 600;
+}
+
+body.dark-mode .nav-link.active {
+  color: var(--primary-color-dark);
+  background: rgba(169, 159, 255, 0.2);
+}
+
+/* Special styling for saved workouts link when workouts exist */
+.nav-link.has-saved-workouts::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #28a745;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+body.dark-mode .nav-link.has-saved-workouts::after {
+  border: 2px solid #2a2a3f;
+}
+
+/* Mobile Navigation */
+.mobile-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  cursor: pointer;
+}
+
+body.dark-mode .mobile-nav-toggle {
+  color: var(--primary-color-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 15px;
+  }
+  
+  .nav-links {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    padding: 20px;
+    gap: 15px;
+    transform: translateY(-100vh);
+    transition: transform 0.3s ease;
+    border-bottom: 1px solid rgba(108, 99, 255, 0.1);
+  }
+  
+  body.dark-mode .nav-links {
+    background: rgba(30, 30, 47, 0.98);
+    border-bottom: 1px solid rgba(169, 159, 255, 0.2);
+  }
+  
+  .nav-links.active {
+    transform: translateY(0);
+  }
+  
+  .mobile-nav-toggle {
+    display: block;
+  }
+  
+  .nav-link {
+    padding: 12px 20px;
+    width: 100%;
+    text-align: center;
+    border-radius: 8px;
+  }
+}
+
+/* Adjust header spacing when nav is present */
+.with-nav header {
+  padding-top: 20px;
+}
+
+/* Update theme toggle position to avoid nav overlap */
+.theme-toggle {
+  top: 80px;
+}

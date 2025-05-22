@@ -6,35 +6,39 @@
   <title>Workout Wizard</title>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="icon" href="https://em-content.zobj.net/source/microsoft-teams/363/crystal-ball_1f52e.png" />
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KNWD8164X5"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-KNWD8164X5');
-</script>
 </head>
-<body>
-<header>
-  <h1>
-    <img src="https://cdn-icons-png.flaticon.com/512/1680/1680365.png" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
-    Workout Wizard <img src="https://cdn-icons-png.freepik.com/512/9084/9084875.png" alt="Wand Icon" style="height: 50px; vertical-align: middle" />
-  </h1>
-  <p>Conjure up your perfect workout in seconds 🪄</p>
-  <p>Select your goals, focus areas, and equipment — then let the magic happen!</p>
-  
-  <!-- Add navigation -->
-  <nav style="margin: 20px 0;">
-    <a href="/about" style="color: var(--primary-color); text-decoration: none; font-weight: 600; margin-right: 20px;">About This App</a>
+<body class="with-nav">
+  <!-- Navigation Bar -->
+  <nav class="main-nav">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" />
+        Workout Wizard
+      </a>
+      
+      <ul class="nav-links" id="nav-links">
+        <li><a href="/" class="nav-link active">Generate Workout</a></li>
+        <li><a href="#" class="nav-link" id="saved-workouts-nav">Saved Workouts</a></li>
+        <li><a href="/about" class="nav-link">About</a></li>
+      </ul>
+      
+      <button class="mobile-nav-toggle" id="mobile-nav-toggle">☰</button>
+    </div>
   </nav>
-  
-  <!-- Simplified theme toggle - now in corner via CSS -->
+
+  <!-- Theme toggle in corner -->
   <div class="theme-toggle">
     <input type="checkbox" id="theme-switch" />
   </div>
-</header>
+
+  <header>
+    <h1>
+      <img src="https://img.icons8.com/?size=100&id=4d0hZ4oxanTO&format=png&color=000000" alt="Wizard Icon" style="height: 50px; vertical-align: middle" />
+  Workout Wizard
+    </h1>
+    <p>Conjure up your perfect workout in seconds 🪄</p>
+    <p>Select your goals, focus areas, and equipment — then let the magic happen!</p>
+  </header>
 
   <main>
     <form id="workout-form">
@@ -196,6 +200,8 @@
     <section id="workout-result" style="display: none;">
       <!-- Generated workout results will go here -->
     </section>
+
+    <!-- Saved workouts section will be dynamically created here -->
   </main>
 
   <div id="exercise-modal" class="modal">
@@ -216,5 +222,81 @@
   </footer>
 
   <script src="/js/script.js"></script>
+  <script>
+    // Navigation functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Mobile navigation toggle
+      const mobileToggle = document.getElementById('mobile-nav-toggle');
+      const navLinks = document.getElementById('nav-links');
+      
+      if (mobileToggle && navLinks) {
+        mobileToggle.addEventListener('click', function() {
+          navLinks.classList.toggle('active');
+        });
+        
+        // Close mobile nav when clicking on a link
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', function() {
+            navLinks.classList.remove('active');
+          });
+        });
+      }
+      
+      // Update saved workouts nav indicator
+      function updateSavedWorkoutsIndicator() {
+        const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
+        const savedWorkoutsNav = document.getElementById('saved-workouts-nav');
+        
+        if (savedWorkoutsNav) {
+          if (savedWorkouts.length > 0) {
+            savedWorkoutsNav.classList.add('has-saved-workouts');
+          } else {
+            savedWorkoutsNav.classList.remove('has-saved-workouts');
+          }
+        }
+      }
+      
+      // Check saved workouts on page load
+      updateSavedWorkoutsIndicator();
+      
+      // Handle saved workouts navigation click
+      const savedWorkoutsNav = document.getElementById('saved-workouts-nav');
+      if (savedWorkoutsNav) {
+        savedWorkoutsNav.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Create or toggle saved workouts section
+          if (!document.getElementById('view-saved-workouts-btn')) {
+            const savedWorkouts = JSON.parse(localStorage.getItem('saved-workouts') || '[]');
+            if (savedWorkouts.length > 0) {
+              createSavedWorkoutsSection();
+              toggleSavedWorkouts();
+            } else {
+              alert('No saved workouts found. Generate and save a workout first!');
+            }
+          } else {
+            toggleSavedWorkouts();
+          }
+          
+          // Scroll to saved workouts section
+          setTimeout(() => {
+            const savedSection = document.querySelector('.saved-workouts-container');
+            if (savedSection) {
+              savedSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+        });
+      }
+      
+      // Update indicator when workouts are saved/deleted
+      const originalSaveWorkout = window.saveWorkout;
+      if (typeof originalSaveWorkout === 'function') {
+        window.saveWorkout = function(workout) {
+          originalSaveWorkout(workout);
+          setTimeout(updateSavedWorkoutsIndicator, 100);
+        };
+      }
+    });
+  </script>
 </body>
 </html>
