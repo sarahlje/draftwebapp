@@ -1,4 +1,4 @@
-// routes/api.js - Updated version with compound movements prioritized first
+// routes/api.js - Updated version with exercise family exclusion and compound-first ordering
 
 const express = require('express');
 const router = express.Router();
@@ -227,69 +227,21 @@ router.post('/generate-workout', async (req, res) => {
     // Limit exercises based on duration and style
     let numberOfExercises;
     if (style === 'focus') {
-    // Focus: About 1 exercise per 12-15 minutes
-    numberOfExercises = Math.max(2, Math.min(4, Math.floor(durationMinutes / 12)));
+      // Focus: About 1 exercise per 12-15 minutes
+      numberOfExercises = Math.max(2, Math.min(4, Math.floor(durationMinutes / 12)));
     } else {
-    // Variety: About 1 exercise per 8-10 minutes  
+      // Variety: About 1 exercise per 8-10 minutes  
       numberOfExercises = Math.max(3, Math.min(8, Math.floor(durationMinutes / 8)));
     }
 
     console.log(`Selecting ${numberOfExercises} exercises for a ${durationMinutes}-minute ${style} workout`);
     
-    // **NEW: PRIORITIZE COMPOUND MOVEMENTS AT THE START**
-    // Separate compound and isolation exercises
-    const compoundExercises = processedExercises.filter(ex => ex.isCompound === true);
-    const isolationExercises = processedExercises.filter(ex => ex.isCompound === false);
-    
-    console.log(`Found ${compoundExercises.length} compound and ${isolationExercises.length} isolation exercises`);
-    
-    // Shuffle each group separately
-    const shuffledCompound = [...compoundExercises].sort(() => Math.random() - 0.5);
-    const shuffledIsolation = [...isolationExercises].sort(() => Math.random() - 0.5);
-    
-    // Determine how many compound vs isolation exercises to include
-    let compoundCount, isolationCount;
-    
-    if (goal === 'strength') {
-      // For strength goals, prioritize compound movements more heavily
-      compoundCount = Math.min(shuffledCompound.length, Math.ceil(numberOfExercises * 0.7)); // 70% compound
-      isolationCount = numberOfExercises - compoundCount;
-    } else if (goal === 'cardio') {
-      // For cardio, still favor compound but allow more variety
-      compoundCount = Math.min(shuffledCompound.length, Math.ceil(numberOfExercises * 0.6)); // 60% compound
-      isolationCount = numberOfExercises - compoundCount;
-    } else {
-      // For general fitness, balanced approach but still compound-first
-      compoundCount = Math.min(shuffledCompound.length, Math.ceil(numberOfExercises * 0.6)); // 60% compound
-      isolationCount = numberOfExercises - compoundCount;
-    }
-    
-    // If we don't have enough compound exercises, fill with isolation
-    if (compoundCount > shuffledCompound.length) {
-      isolationCount += (compoundCount - shuffledCompound.length);
-      compoundCount = shuffledCompound.length;
-    }
-    
-    // If we don't have enough isolation exercises, add more compound
-    if (isolationCount > shuffledIsolation.length) {
-      const additionalCompound = Math.min(
-        shuffledCompound.length - compoundCount,
-        isolationCount - shuffledIsolation.length
-      );
-      compoundCount += additionalCompound;
-      isolationCount = shuffledIsolation.length;
-    }
-    
-    console.log(`Selecting ${compoundCount} compound and ${isolationCount} isolation exercises`);
-    
-    // Build the final exercise list: compound first, then isolation
-    const selectedExercises = [
-      ...shuffledCompound.slice(0, compoundCount),
-      ...shuffledIsolation.slice(0, isolationCount)
-    ];
-    
-    // Ensure we have the right number of exercises
-    const finalExercises = selectedExercises.slice(0, numberOfExercises);
+    // **NEW: SMART EXERCISE SELECTION WITH FAMILY EXCLUSION AND COMPOUND-FIRST ORDERING**
+    const selectedExercises = selectExercisesAvoidingDuplicates(
+      processedExercises, 
+      numberOfExercises, 
+      goal
+    );
     
     // Create the workout object
     const workout = {
@@ -299,11 +251,14 @@ router.post('/generate-workout', async (req, res) => {
       focus: focus,
       style: style || 'variety',
       equipment: equipment,
-      exercises: finalExercises
+      exercises: selectedExercises
     };
     
-    console.log(`Successfully generated workout with ${finalExercises.length} exercises`);
-    console.log(`Compound exercises first: ${finalExercises.filter(ex => ex.isCompound).length} compound, ${finalExercises.filter(ex => !ex.isCompound).length} isolation`);
+    console.log(`Successfully generated workout with ${selectedExercises.length} exercises`);
+    console.log('Selected exercises with families:');
+    selectedExercises.forEach((ex, index) => {
+      console.log(`${index + 1}. ${ex.name} (family: ${ex.exerciseFamily || 'none'}, compound: ${ex.isCompound})`);
+    });
     res.json(workout);
     
   } catch (err) {
@@ -311,6 +266,163 @@ router.post('/generate-workout', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate workout: ' + err.message });
   }
 });
+
+/**
+ * Smart exercise selection that avoids duplicates from the same family
+ * AND maintains compound movements at the start of the workout
+ */
+function selectExercisesAvoidingDuplicates(exercises, targetCount, goal) {
+  const selectedExercises = [];
+  const usedFamilies = new Set();
+  
+  // Group exercises by family (including exercises without families)
+  const exercisesByFamily = {};
+  const exercisesWithoutFamily = [];
+  
+  exercises.forEach(exercise => {
+    if (exercise.exerciseFamily) {
+      if (!exercisesByFamily[exercise.exerciseFamily]) {
+        exercisesByFamily[exercise.exerciseFamily] = [];
+      }
+      exercisesByFamily[exercise.exerciseFamily].push(exercise);
+    } else {
+      // Exercises without families are treated as unique
+      exercisesWithoutFamily.push(exercise);
+    }
+  });
+  
+  console.log(`Found ${Object.keys(exercisesByFamily).length} exercise families and ${exercisesWithoutFamily.length} unique exercises`);
+  
+  // Separate compound and isolation exercises for ratio balancing
+  const compoundFamilies = [];
+  const isolationFamilies = [];
+  const compoundUnique = [];
+  const isolationUnique = [];
+  
+  // Categorize families by compound/isolation (based on majority)
+  Object.entries(exercisesByFamily).forEach(([familyName, familyExercises]) => {
+    const compoundCount = familyExercises.filter(ex => ex.isCompound).length;
+    const isCompoundFamily = compoundCount > familyExercises.length / 2;
+    
+    if (isCompoundFamily) {
+      compoundFamilies.push({ name: familyName, exercises: familyExercises });
+    } else {
+      isolationFamilies.push({ name: familyName, exercises: familyExercises });
+    }
+  });
+  
+  // Categorize unique exercises
+  exercisesWithoutFamily.forEach(exercise => {
+    if (exercise.isCompound) {
+      compoundUnique.push(exercise);
+    } else {
+      isolationUnique.push(exercise);
+    }
+  });
+  
+  // Shuffle all arrays for randomness
+  const shuffledCompoundFamilies = [...compoundFamilies].sort(() => Math.random() - 0.5);
+  const shuffledIsolationFamilies = [...isolationFamilies].sort(() => Math.random() - 0.5);
+  const shuffledCompoundUnique = [...compoundUnique].sort(() => Math.random() - 0.5);
+  const shuffledIsolationUnique = [...isolationUnique].sort(() => Math.random() - 0.5);
+  
+  // Determine compound vs isolation ratio based on goal
+  let compoundRatio;
+  if (goal === 'strength') {
+    compoundRatio = 0.7; // 70% compound for strength
+  } else if (goal === 'cardio') {
+    compoundRatio = 0.6; // 60% compound for cardio
+  } else {
+    compoundRatio = 0.6; // 60% compound for general fitness
+  }
+  
+  const targetCompoundCount = Math.ceil(targetCount * compoundRatio);
+  const targetIsolationCount = targetCount - targetCompoundCount;
+  
+  console.log(`Target: ${targetCompoundCount} compound, ${targetIsolationCount} isolation exercises`);
+  
+  // **COMPOUND EXERCISES FIRST** - for workout ordering
+  const compoundExercises = [];
+  let compoundSelected = 0;
+  
+  // Select from compound families (randomly pick one exercise from each family)
+  for (const family of shuffledCompoundFamilies) {
+    if (compoundSelected >= targetCompoundCount) break;
+    
+    // Randomly select one exercise from this family
+    const randomExercise = family.exercises[Math.floor(Math.random() * family.exercises.length)];
+    compoundExercises.push(randomExercise);
+    usedFamilies.add(family.name);
+    compoundSelected++;
+    
+    console.log(`Selected compound from ${family.name} family: ${randomExercise.name}`);
+  }
+  
+  // Then, select from unique compound exercises
+  for (const exercise of shuffledCompoundUnique) {
+    if (compoundSelected >= targetCompoundCount) break;
+    
+    compoundExercises.push(exercise);
+    compoundSelected++;
+    
+    console.log(`Selected unique compound: ${exercise.name}`);
+  }
+  
+  // **ISOLATION EXERCISES SECOND** - for workout ordering
+  const isolationExercises = [];
+  let isolationSelected = 0;
+  
+  // Select from isolation families (randomly pick one exercise from each family)
+  for (const family of shuffledIsolationFamilies) {
+    if (isolationSelected >= targetIsolationCount) break;
+    
+    // Randomly select one exercise from this family
+    const randomExercise = family.exercises[Math.floor(Math.random() * family.exercises.length)];
+    isolationExercises.push(randomExercise);
+    usedFamilies.add(family.name);
+    isolationSelected++;
+    
+    console.log(`Selected isolation from ${family.name} family: ${randomExercise.name}`);
+  }
+  
+  // Then, select from unique isolation exercises
+  for (const exercise of shuffledIsolationUnique) {
+    if (isolationSelected >= targetIsolationCount) break;
+    
+    isolationExercises.push(exercise);
+    isolationSelected++;
+    
+    console.log(`Selected unique isolation: ${exercise.name}`);
+  }
+  
+  // **MAINTAIN COMPOUND-FIRST ORDER**: Add compound exercises first, then isolation
+  selectedExercises.push(...compoundExercises);
+  selectedExercises.push(...isolationExercises);
+  
+  // If we still need more exercises, relax the family restriction
+  if (selectedExercises.length < targetCount) {
+    console.log(`Need ${targetCount - selectedExercises.length} more exercises, relaxing family restrictions...`);
+    
+    const remainingExercises = exercises.filter(ex => !selectedExercises.includes(ex));
+    const shuffledRemaining = remainingExercises.sort(() => Math.random() - 0.5);
+    
+    for (const exercise of shuffledRemaining) {
+      if (selectedExercises.length >= targetCount) break;
+      
+      selectedExercises.push(exercise);
+      console.log(`Added additional: ${exercise.name} (family: ${exercise.exerciseFamily || 'none'})`);
+    }
+  }
+  
+  // Return exercises in compound-first order (no final shuffle)
+  const finalSelection = selectedExercises.slice(0, targetCount);
+  
+  console.log(`Final selection: ${finalSelection.length} exercises`);
+  console.log(`Families used: ${[...usedFamilies].join(', ')}`);
+  console.log(`Order: Compound exercises first, then isolation exercises`);
+  
+  return finalSelection;
+}
 
 // Add the fallback endpoint
 router.post('/generate-workout-fallback', async (req, res) => {
@@ -327,12 +439,12 @@ router.post('/generate-workout-fallback', async (req, res) => {
   }
 });
 
-// Update the fallback workout generator to also prioritize compound movements
+// Update the fallback workout generator to also prioritize compound movements and respect families
 function generateFallbackWorkout(focus, goal, equipment, duration, style) {
   console.log("Generating fallback workout with style:", style);
   console.log("Equipment selected:", equipment);
   
-  // Define exercises by muscle group - now with proper isCompound flags
+  // Define exercises by muscle group - now with proper isCompound flags and families
   const exercisesByMuscleGroup = {
     chest: [
       {
@@ -344,7 +456,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Keep your body straight and lower until elbows are at 90 degrees, then push back up.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true, // Compound movement
+        isCompound: true,
+        exerciseFamily: "push_ups",
         sets: style === 'focus' ? 4 : 3,
         reps: "10-12",
         tips: [
@@ -364,7 +477,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Stand with feet shoulder-width apart, lower your body as if sitting in a chair, then stand back up.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true, // Compound movement
+        isCompound: true,
+        exerciseFamily: "squats",
         sets: style === 'focus' ? 4 : 3,
         reps: "12-15",
         tips: [
@@ -382,7 +496,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Step forward with one leg, lowering your hips until both knees are bent at about 90 degrees.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true, // Compound movement
+        isCompound: true,
+        exerciseFamily: "lunges",
         sets: style === 'focus' ? 4 : 3,
         reps: "10-12 each leg",
         tips: [
@@ -402,7 +517,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Hold a push-up position on your forearms, keeping your body in a straight line.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: false, // Isolation movement
+        isCompound: false,
+        exerciseFamily: "planks",
         sets: style === 'focus' ? 4 : 3,
         reps: "30 seconds",
         tips: [
@@ -422,7 +538,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "cardio",
         instructions: "Jump while spreading your legs and raising your arms overhead, then jump back to the starting position.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true, // Compound movement
+        isCompound: true,
+        exerciseFamily: "cardio_jumps",
         sets: style === 'focus' ? 4 : 3,
         reps: "45 seconds",
         tips: [
@@ -440,7 +557,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "cardio",
         instructions: "Start in a plank position. Alternate bringing each knee toward your chest in a running motion.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true, // Compound movement
+        isCompound: true,
+        exerciseFamily: null, // Unique exercise
         sets: style === 'focus' ? 4 : 3,
         reps: "40 seconds",
         tips: [
@@ -458,7 +576,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "cardio",
         instructions: "Start standing, drop to a squat, kick feet back to plank, do a push-up, return to squat, then jump up.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: true, // Compound movement
+        isCompound: true,
+        exerciseFamily: "burpees",
         sets: style === 'focus' ? 3 : 2,
         reps: "10-12",
         tips: [
@@ -478,7 +597,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Lie face down with arms extended forward. Lift arms, chest, and legs off the ground simultaneously.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: false, // Isolation movement
+        isCompound: false,
+        exerciseFamily: null, // Unique exercise
         sets: style === 'focus' ? 4 : 3,
         reps: "20-30 seconds",
         tips: [
@@ -498,7 +618,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
         category: "strength",
         instructions: "Use a chair or bench, place hands on edge with fingers forward, lower body by bending elbows.",
         imageUrl: "/api/placeholder/150/150",
-        isCompound: false, // Isolation movement
+        isCompound: false,
+        exerciseFamily: null, // Unique exercise
         sets: style === 'focus' ? 4 : 3,
         reps: "10-12",
         tips: [
@@ -553,26 +674,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
     });
   }
   
-  // **Apply compound-first logic to fallback workouts too**
-  const compoundExercises = allExercises.filter(ex => ex.isCompound === true);
-  const isolationExercises = allExercises.filter(ex => ex.isCompound === false);
-  
-  // Shuffle each group
-  const shuffledCompound = [...compoundExercises].sort(() => Math.random() - 0.5);
-  const shuffledIsolation = [...isolationExercises].sort(() => Math.random() - 0.5);
-  
-  // Prioritize compound movements (60-70% of workout)
-  const compoundCount = Math.min(shuffledCompound.length, Math.ceil(exerciseCount * 0.6));
-  const isolationCount = Math.min(shuffledIsolation.length, exerciseCount - compoundCount);
-  
-  // Build final exercise list: compound first, then isolation
-  const selectedExercises = [
-    ...shuffledCompound.slice(0, compoundCount),
-    ...shuffledIsolation.slice(0, isolationCount)
-  ];
-  
-  // Limit to the required count
-  const finalExercises = selectedExercises.slice(0, exerciseCount);
+  // **Apply family-aware selection with compound-first ordering to fallback workouts**
+  const selectedExercises = selectExercisesAvoidingDuplicates(allExercises, exerciseCount, goal);
   
   // Create the workout object
   return {
@@ -582,7 +685,7 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
     focus: focus,
     style: style || 'variety',
     equipment: equipment,
-    exercises: finalExercises
+    exercises: selectedExercises
   };
 }
 
