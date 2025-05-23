@@ -37,7 +37,7 @@ enum Equipment {
   all
 }
 
-// Exercise model
+// Exercise model - simplified version
 model Exercise {
   id                     Int      @id @default(autoincrement())
   name                   String   @unique
@@ -53,7 +53,8 @@ model Exercise {
   createdAt              DateTime @default(now())
   excludeFromCardio      Boolean  @default(false)
   excludeFromStrength    Boolean  @default(false)
-  isUnilateral           Boolean  @default(false) // NEW FIELD: indicates if exercise is per side
+  isUnilateral           Boolean  @default(false)
+  exerciseFamily         String?  // Just the family grouping, no priority needed
 }
 
 // Workout model - stores full generated workouts
