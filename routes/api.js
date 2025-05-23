@@ -227,11 +227,11 @@ router.post('/generate-workout', async (req, res) => {
     // Limit exercises based on duration and style
     let numberOfExercises;
     if (style === 'focus') {
-      // For focus style: fewer exercises (about 1 per 8-10 mins)
-      numberOfExercises = Math.max(3, Math.min(6, Math.floor(durationMinutes / 10)));
+    // Focus: About 1 exercise per 12-15 minutes
+    numberOfExercises = Math.max(2, Math.min(4, Math.floor(durationMinutes / 12)));
     } else {
-      // For variety style: more exercises (about 1 per 4-5 mins)
-      numberOfExercises = Math.max(4, Math.min(12, Math.floor(durationMinutes / 5)));
+    // Variety: About 1 exercise per 8-10 minutes  
+      numberOfExercises = Math.max(3, Math.min(8, Math.floor(durationMinutes / 8)));
     }
 
     console.log(`Selecting ${numberOfExercises} exercises for a ${durationMinutes}-minute ${style} workout`);
