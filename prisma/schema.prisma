@@ -44,7 +44,6 @@ model Exercise {
   description            String?
   muscleGroup            String
   equipment              String?
-  // difficulty field removed
   category               String
   instructions           String?
   imageUrl               String?
@@ -53,7 +52,8 @@ model Exercise {
   tips                   String[] @default([])
   createdAt              DateTime @default(now())
   excludeFromCardio      Boolean  @default(false)
-  excludeFromStrength    Boolean  @default(false) // New field added
+  excludeFromStrength    Boolean  @default(false)
+  isUnilateral           Boolean  @default(false) // NEW FIELD: indicates if exercise is per side
 }
 
 // Workout model - stores full generated workouts

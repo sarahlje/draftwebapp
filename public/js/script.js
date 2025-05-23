@@ -275,8 +275,9 @@ function validateForm() {
     
     return true;
 }
+// Updated displayWorkout function in script.js
+// Replace the existing displayWorkout function with this updated version
 
-// Show the generated workout on the page
 function displayWorkout(workout) {
   const workoutResult = document.getElementById('workout-result');
   workoutResult.innerHTML = ''; // Clear previous results
@@ -363,6 +364,11 @@ function displayWorkout(workout) {
     } else {
         // For strength/regular workouts, show reps
         repsDisplay = `${exercise.reps} reps`;
+        
+        // **NEW: Add "per side" for unilateral exercises**
+        if (exercise.isUnilateral) {
+          repsDisplay += ' per side';
+        }
     }
     
     // Check if the exercise has a video
