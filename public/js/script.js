@@ -31,6 +31,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Global variable to store exercises
 let exerciseDatabase = [];
 
+// Exercise blacklist functions
+function getBlacklistedExercises() {
+    return JSON.parse(localStorage.getItem('blacklisted-exercises') || '[]');
+}
+
+function saveBlacklistedExercises(blacklist) {
+    localStorage.setItem('blacklisted-exercises', JSON.stringify(blacklist));
+}
+
+function blacklistExercise(exerciseName) {
+    const blacklist = getBlacklistedExercises();
+    if (!blacklist.includes(exerciseName)) {
+        blacklist.push(exerciseName);
+        saveBlacklistedExercises(blacklist);
+        console.log(`Added ${exerciseName} to blacklist`);
+        return true;
+    }
+    return false;
+}
+
+function removeFromBlacklist(exerciseName) {
+    const blacklist = getBlacklistedExercises();
+    const updated = blacklist.filter(name => name !== exerciseName);
+    saveBlacklistedExercises(updated);
+    console.log(`Removed ${exerciseName} from blacklist`);
+}
+
 // Load exercise data from backend
 async function loadExerciseDatabase() {
     try {
@@ -218,7 +245,8 @@ async function handleFormSubmit(e) {
         goal: formData.get('fitness-goal'),
         equipment: formData.getAll('equipment'),
         duration: formData.get('workout-duration'),
-        style: formData.get('workout-style') || 'variety'
+        style: formData.get('workout-style') || 'variety',
+        blacklist: getBlacklistedExercises() // Include blacklist in request
     };
     
     // Save preferences
@@ -275,9 +303,8 @@ function validateForm() {
     
     return true;
 }
-// Updated displayWorkout function in script.js
-// Replace the existing displayWorkout function with this updated version
 
+// Updated displayWorkout function with blacklist functionality
 function displayWorkout(workout) {
   const workoutResult = document.getElementById('workout-result');
   workoutResult.innerHTML = ''; // Clear previous results
@@ -326,6 +353,7 @@ function displayWorkout(workout) {
       <div class="workout-actions">
           <button id="regenerate-btn">Regenerate Workout</button>
           <button id="save-workout-btn">Save Workout</button>
+          <button id="manage-blacklist-btn">Manage Hidden Exercises</button>
       </div>
   `;
   workoutResult.insertAdjacentHTML('beforeend', summaryHTML);
@@ -342,6 +370,7 @@ function displayWorkout(workout) {
   // Add event listeners to buttons
   document.getElementById('regenerate-btn').addEventListener('click', regenerateWorkout);
   document.getElementById('save-workout-btn').addEventListener('click', () => saveWorkout(workout));
+  document.getElementById('manage-blacklist-btn').addEventListener('click', showBlacklistManager);
 
   // Create container for exercises
   const exercisesContainer = document.createElement('div');
@@ -365,7 +394,7 @@ function displayWorkout(workout) {
         // For strength/regular workouts, show reps
         repsDisplay = `${exercise.reps} reps`;
         
-        // **NEW: Add "per side" for unilateral exercises**
+        // Add "per side" for unilateral exercises
         if (exercise.isUnilateral) {
           repsDisplay += ' per side';
         }
@@ -379,7 +408,10 @@ function displayWorkout(workout) {
             <h4>${index + 1}. ${exercise.name}</h4>
             <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
             <p>${exercise.sets} sets × ${repsDisplay}</p>
-            <button class="view-exercise-btn" data-index="${index}">Details</button>
+            <div class="exercise-actions">
+                <button class="view-exercise-btn" data-index="${index}">Details</button>
+                <button class="blacklist-exercise-btn" data-exercise="${exercise.name}">Hide</button>
+            </div>
         </div>
     `;
     exercisesContainer.insertAdjacentHTML('beforeend', exerciseHTML);
@@ -406,6 +438,65 @@ function displayWorkout(workout) {
         showExerciseDetails(index);
     });
   });
+  
+  // Add event listeners to blacklist buttons
+  document.querySelectorAll('.blacklist-exercise-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const exerciseName = button.dataset.exercise;
+        if (confirm(`Hide "${exerciseName}"? This exercise won't appear in future workouts.`)) {
+            if (blacklistExercise(exerciseName)) {
+                button.textContent = '✓ Hidden';
+                button.disabled = true;
+                button.style.backgroundColor = '#666';
+                button.style.cursor = 'not-allowed';
+            }
+        }
+    });
+  });
+}
+
+// Show blacklist manager modal
+function showBlacklistManager() {
+  const blacklist = getBlacklistedExercises();
+  
+  // Create modal HTML
+  const modalHTML = `
+    <div id="blacklist-modal" class="modal" style="display: block;">
+      <div class="modal-content">
+        <span class="close-modal" onclick="document.getElementById('blacklist-modal').remove()">&times;</span>
+        <h2>Manage Hidden Exercises</h2>
+        <p>These exercises won't appear in future workouts:</p>
+        <div id="blacklist-list">
+          ${blacklist.length === 0 ? 
+            '<p style="color: #666; font-style: italic;">No exercises hidden yet.</p>' : 
+            blacklist.map(exercise => `
+              <div class="blacklist-item">
+                <span>${exercise}</span>
+                <button class="remove-blacklist-btn" data-exercise="${exercise}">Remove</button>
+              </div>
+            `).join('')
+          }
+        </div>
+        <button onclick="document.getElementById('blacklist-modal').remove()" style="margin-top: 20px; background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Close</button>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to page
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  
+  // Add event listeners to remove buttons
+  document.querySelectorAll('.remove-blacklist-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const exerciseName = button.dataset.exercise;
+      if (confirm(`Remove "${exerciseName}" from hidden list?`)) {
+        removeFromBlacklist(exerciseName);
+        // Refresh the modal
+        document.getElementById('blacklist-modal').remove();
+        showBlacklistManager();
+      }
+    });
+  });
 }
 
 // Regenerate workout using same parameters
@@ -418,6 +509,8 @@ async function regenerateWorkout() {
     }
     
     const workoutParams = JSON.parse(savedPrefs);
+    // Make sure to include current blacklist
+    workoutParams.blacklist = getBlacklistedExercises();
     
     try {
         const response = await fetch('/api/generate-workout', {

@@ -637,6 +637,128 @@ body.dark-mode .view-exercise-btn:hover {
   background-color: #9285ff;
 }
 
+/* Exercise actions container */
+.exercise-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* Override view-exercise-btn margin when in actions container */
+.exercise-actions .view-exercise-btn {
+  margin-top: 0;
+}
+
+/* Blacklist (hide) button styling - match details button exactly */
+.blacklist-exercise-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0; /* Remove any margin since container handles spacing */
+}
+
+.blacklist-exercise-btn:hover {
+  background-color: #5a6268;
+}
+
+.blacklist-exercise-btn:disabled {
+  background-color: #666 !important;
+  cursor: not-allowed;
+}
+
+body.dark-mode .blacklist-exercise-btn {
+  background-color: #adb5bd;
+  color: #212529;
+}
+
+body.dark-mode .blacklist-exercise-btn:hover {
+  background-color: #95a5a6;
+}
+
+/* Manage blacklist button */
+#manage-blacklist-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+#manage-blacklist-btn:hover {
+  background-color: #5a6268;
+}
+
+body.dark-mode #manage-blacklist-btn {
+  background-color: #adb5bd;
+  color: #212529;
+}
+
+body.dark-mode #manage-blacklist-btn:hover {
+  background-color: #95a5a6;
+}
+
+/* Blacklist manager modal styles */
+.blacklist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #6c757d;
+}
+
+body.dark-mode .blacklist-item {
+  background-color: #3a3a5f;
+  color: var(--text-light);
+}
+
+.blacklist-item span {
+  font-weight: 500;
+}
+
+.remove-blacklist-btn {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.remove-blacklist-btn:hover {
+  background-color: #138496;
+}
+
+body.dark-mode .remove-blacklist-btn {
+  background-color: #20c997;
+}
+
+body.dark-mode .remove-blacklist-btn:hover {
+  background-color: #1ca085;
+}
+
+/* Responsive adjustments for exercise actions */
+@media (max-width: 600px) {
+  .exercise-actions {
+    flex-direction: column;
+  }
+  
+  .blacklist-exercise-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .view-exercise-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 /* Video icon for exercise cards with videos */
 .exercise-card.has-video::after {
   content: "▶";

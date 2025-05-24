@@ -21,7 +21,7 @@ router.post('/generate-workout', async (req, res) => {
   try {
     console.log("Received workout generation request:", req.body);
     
-    const { focus, goal, equipment, duration, style } = req.body;
+    const { focus, goal, equipment, duration, style, blacklist } = req.body;
     
     if (!focus || !goal || !equipment || !duration) {
       console.log("Missing required parameters:", { focus, goal, equipment, duration });
@@ -47,13 +47,19 @@ router.post('/generate-workout', async (req, res) => {
       });
     }
     
+    // Log blacklisted exercises
+    const blacklistedExercises = blacklist || [];
+    if (blacklistedExercises.length > 0) {
+      console.log("Blacklisted exercises:", blacklistedExercises);
+    }
+    
     // First, check if we have any exercises in the database
     const exerciseCount = await prisma.exercise.count();
     console.log(`Total exercises in database: ${exerciseCount}`);
     
     if (exerciseCount === 0) {
       console.log("No exercises found in database. Using fallback exercises.");
-      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
+      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style, blacklistedExercises));
     }
 
     // Get exercises that match the focus areas and equipment and respect exclusion flags
@@ -80,7 +86,9 @@ router.post('/generate-workout', async (req, res) => {
           goal === 'cardio' ? { excludeFromCardio: false } : {},
           goal === 'strength' ? { excludeFromStrength: false } : {},
           // Add equipment filter
-          equipmentFilter
+          equipmentFilter,
+          // **NEW: Exclude blacklisted exercises**
+          blacklistedExercises.length > 0 ? { name: { notIn: blacklistedExercises } } : {}
         ]
       }
     };
@@ -93,7 +101,7 @@ router.post('/generate-workout', async (req, res) => {
       exerciseQuery.where.AND.push({ muscleGroup: { in: focus } });
     }
 
-    console.log("Exercise query:", JSON.stringify(exerciseQuery, null, 2));
+    console.log("Exercise query with blacklist:", JSON.stringify(exerciseQuery, null, 2));
     const allExercises = await prisma.exercise.findMany(exerciseQuery);
 
     // For full body workouts, ensure we have a balanced mix of exercises
@@ -144,8 +152,8 @@ router.post('/generate-workout', async (req, res) => {
     }
 
     if (allExercises.length === 0) {
-      console.log("No exercises found for the selected focus areas and equipment. Using fallback.");
-      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style));
+      console.log("No exercises found after applying blacklist and filters. Using fallback.");
+      return res.status(200).json(generateFallbackWorkout(focus, goal, equipment, durationMinutes, style, blacklistedExercises));
     }
     
     // Create workout name
@@ -255,6 +263,9 @@ router.post('/generate-workout', async (req, res) => {
     };
     
     console.log(`Successfully generated workout with ${selectedExercises.length} exercises`);
+    if (blacklistedExercises.length > 0) {
+      console.log(`Excluded ${blacklistedExercises.length} blacklisted exercises`);
+    }
     console.log('Selected exercises with families:');
     selectedExercises.forEach((ex, index) => {
       console.log(`${index + 1}. ${ex.name} (family: ${ex.exerciseFamily || 'none'}, compound: ${ex.isCompound})`);
@@ -427,10 +438,10 @@ function selectExercisesAvoidingDuplicates(exercises, targetCount, goal) {
 // Add the fallback endpoint
 router.post('/generate-workout-fallback', async (req, res) => {
   try {
-    const { focus, goal, equipment, duration, style } = req.body;
+    const { focus, goal, equipment, duration, style, blacklist } = req.body;
     
     // Call the existing fallback function
-    const workout = generateFallbackWorkout(focus, goal, equipment, parseInt(duration), style);
+    const workout = generateFallbackWorkout(focus, goal, equipment, parseInt(duration), style, blacklist || []);
     res.json(workout);
     
   } catch (err) {
@@ -440,9 +451,10 @@ router.post('/generate-workout-fallback', async (req, res) => {
 });
 
 // Update the fallback workout generator to also prioritize compound movements and respect families
-function generateFallbackWorkout(focus, goal, equipment, duration, style) {
+function generateFallbackWorkout(focus, goal, equipment, duration, style, blacklist = []) {
   console.log("Generating fallback workout with style:", style);
   console.log("Equipment selected:", equipment);
+  console.log("Blacklisted exercises:", blacklist);
   
   // Define exercises by muscle group - now with proper isCompound flags and families
   const exercisesByMuscleGroup = {
@@ -673,6 +685,9 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style) {
       }
     });
   }
+  
+  // **Filter out blacklisted exercises from fallback**
+  allExercises = allExercises.filter(exercise => !blacklist.includes(exercise.name));
   
   // **Apply family-aware selection with compound-first ordering to fallback workouts**
   const selectedExercises = selectExercisesAvoidingDuplicates(allExercises, exerciseCount, goal);
