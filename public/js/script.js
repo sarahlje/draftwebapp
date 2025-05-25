@@ -459,9 +459,9 @@ function displayWorkout(workout) {
 function showBlacklistManager() {
   const blacklist = getBlacklistedExercises();
   
-  // Create modal HTML
+  // Create modal HTML with correct structure and styling
   const modalHTML = `
-    <div id="blacklist-modal" class="modal" style="display: block;">
+    <div id="blacklist-modal" style="display: flex; position: fixed; z-index: 999; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background-color: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center;">
       <div class="modal-content">
         <span class="close-modal" onclick="document.getElementById('blacklist-modal').remove()">&times;</span>
         <h2>Manage Hidden Exercises</h2>
