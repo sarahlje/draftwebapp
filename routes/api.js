@@ -1,4 +1,4 @@
-// routes/api.js - Updated version with exercise family exclusion and compound-first ordering
+// routes/api.js - Updated version with enhanced full body workout distribution
 
 const express = require('express');
 const router = express.Router();
@@ -244,11 +244,13 @@ router.post('/generate-workout', async (req, res) => {
 
     console.log(`Selecting ${numberOfExercises} exercises for a ${durationMinutes}-minute ${style} workout`);
     
-    // **NEW: SMART EXERCISE SELECTION WITH FAMILY EXCLUSION AND COMPOUND-FIRST ORDERING**
-    const selectedExercises = selectExercisesAvoidingDuplicates(
+    // **ENHANCED: SMART EXERCISE SELECTION WITH BETTER FULL BODY DISTRIBUTION**
+    const isFullBodyWorkout = focus.includes('full_body');
+    const selectedExercises = selectExercisesAvoidingDuplicatesEnhanced(
       processedExercises, 
       numberOfExercises, 
-      goal
+      goal,
+      isFullBodyWorkout
     );
     
     // Create the workout object
@@ -279,8 +281,226 @@ router.post('/generate-workout', async (req, res) => {
 });
 
 /**
+ * Enhanced exercise selection that uses different logic for full body vs targeted workouts
+ */
+function selectExercisesAvoidingDuplicatesEnhanced(exercises, targetCount, goal, isFullBody = false) {
+  // If it's a full body workout, use the enhanced distribution logic
+  if (isFullBody) {
+    return selectFullBodyExercisesWithEvenDistribution(exercises, targetCount, goal);
+  }
+  
+  // Otherwise, use the existing logic for targeted workouts
+  return selectExercisesAvoidingDuplicates(exercises, targetCount, goal);
+}
+
+/**
+ * Enhanced exercise selection for full body workouts with better muscle group distribution
+ */
+function selectFullBodyExercisesWithEvenDistribution(allExercises, targetCount, goal) {
+  console.log(`Selecting ${targetCount} exercises for full body workout with even distribution`);
+  
+  // Define priority muscle groups for full body workouts
+  const priorityMuscleGroups = [
+    'chest',
+    'back', 
+    'legs',
+    'shoulders',
+    'core',
+    'arms',
+    'glutes'
+  ];
+  
+  // Group exercises by muscle group
+  const exercisesByMuscleGroup = {};
+  const fullBodyExercises = []; // Exercises specifically tagged as full_body
+  
+  allExercises.forEach(exercise => {
+    if (exercise.muscleGroup === 'full_body') {
+      fullBodyExercises.push(exercise);
+    } else if (priorityMuscleGroups.includes(exercise.muscleGroup)) {
+      if (!exercisesByMuscleGroup[exercise.muscleGroup]) {
+        exercisesByMuscleGroup[exercise.muscleGroup] = [];
+      }
+      exercisesByMuscleGroup[exercise.muscleGroup].push(exercise);
+    }
+  });
+  
+  console.log(`Found exercises in ${Object.keys(exercisesByMuscleGroup).length} muscle groups`);
+  console.log(`Found ${fullBodyExercises.length} full-body exercises`);
+  
+  // Separate compound and isolation exercises within each group
+  const compoundByGroup = {};
+  const isolationByGroup = {};
+  
+  Object.entries(exercisesByMuscleGroup).forEach(([group, exercises]) => {
+    compoundByGroup[group] = exercises.filter(ex => ex.isCompound);
+    isolationByGroup[group] = exercises.filter(ex => !ex.isCompound);
+  });
+  
+  // Separate full body exercises by compound/isolation
+  const fullBodyCompound = fullBodyExercises.filter(ex => ex.isCompound);
+  const fullBodyIsolation = fullBodyExercises.filter(ex => !ex.isCompound);
+  
+  // Calculate distribution - aim for at least one exercise from major muscle groups
+  const availableGroups = Object.keys(exercisesByMuscleGroup);
+  const selectedExercises = [];
+  const usedFamilies = new Set();
+  
+  // Phase 1: Select compound exercises first (prioritizing one per major muscle group)
+  const compoundExercises = [];
+  
+  // First, add 1-2 full body compound exercises if available
+  const shuffledFullBodyCompound = [...fullBodyCompound].sort(() => Math.random() - 0.5);
+  const fullBodyCompoundToAdd = Math.min(2, Math.floor(targetCount * 0.3), shuffledFullBodyCompound.length);
+  
+  for (let i = 0; i < fullBodyCompoundToAdd; i++) {
+    const exercise = shuffledFullBodyCompound[i];
+    if (!usedFamilies.has(exercise.exerciseFamily) || !exercise.exerciseFamily) {
+      compoundExercises.push(exercise);
+      if (exercise.exerciseFamily) usedFamilies.add(exercise.exerciseFamily);
+      console.log(`Added full body compound: ${exercise.name}`);
+    }
+  }
+  
+  // Then, add one compound exercise from each major muscle group
+  const shuffledGroups = [...priorityMuscleGroups].sort(() => Math.random() - 0.5);
+  
+  for (const group of shuffledGroups) {
+    if (compoundExercises.length >= Math.ceil(targetCount * 0.7)) break; // Don't exceed 70% compound
+    
+    if (compoundByGroup[group] && compoundByGroup[group].length > 0) {
+      // Filter out exercises from already used families
+      const availableExercises = compoundByGroup[group].filter(ex => 
+        !ex.exerciseFamily || !usedFamilies.has(ex.exerciseFamily)
+      );
+      
+      if (availableExercises.length > 0) {
+        // Randomly select one exercise from this group
+        const randomExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+        compoundExercises.push(randomExercise);
+        if (randomExercise.exerciseFamily) usedFamilies.add(randomExercise.exerciseFamily);
+        console.log(`Added ${group} compound: ${randomExercise.name}`);
+      }
+    }
+  }
+  
+  // Phase 2: Fill remaining slots with exercises, maintaining muscle group balance
+  const isolationExercises = [];
+  const remainingSlots = targetCount - compoundExercises.length;
+  
+  // Track which groups are represented
+  const groupCounts = {};
+  priorityMuscleGroups.forEach(group => groupCounts[group] = 0);
+  
+  // Count exercises already selected per group
+  compoundExercises.forEach(ex => {
+    if (ex.muscleGroup !== 'full_body' && groupCounts.hasOwnProperty(ex.muscleGroup)) {
+      groupCounts[ex.muscleGroup]++;
+    }
+  });
+  
+  // Fill remaining slots, prioritizing underrepresented groups
+  for (let i = 0; i < remainingSlots; i++) {
+    // Find the muscle group(s) with the fewest exercises
+    const minCount = Math.min(...Object.values(groupCounts));
+    const underrepresentedGroups = Object.keys(groupCounts).filter(group => {
+      const hasIsolation = isolationByGroup[group] && isolationByGroup[group].length > 0;
+      const hasCompound = compoundByGroup[group] && compoundByGroup[group].length > 0;
+      return groupCounts[group] === minCount && (hasIsolation || hasCompound);
+    });
+    
+    if (underrepresentedGroups.length > 0) {
+      // Pick a random underrepresented group
+      const targetGroup = underrepresentedGroups[Math.floor(Math.random() * underrepresentedGroups.length)];
+      
+      // Try isolation exercises first, then compound if none available
+      let availableExercises = [];
+      
+      if (isolationByGroup[targetGroup] && isolationByGroup[targetGroup].length > 0) {
+        availableExercises = isolationByGroup[targetGroup].filter(ex => 
+          !ex.exerciseFamily || !usedFamilies.has(ex.exerciseFamily)
+        );
+      }
+      
+      // If no isolation exercises available, try compound
+      if (availableExercises.length === 0 && compoundByGroup[targetGroup] && compoundByGroup[targetGroup].length > 0) {
+        availableExercises = compoundByGroup[targetGroup].filter(ex => 
+          !ex.exerciseFamily || !usedFamilies.has(ex.exerciseFamily)
+        );
+      }
+      
+      if (availableExercises.length > 0) {
+        const randomExercise = availableExercises[Math.floor(Math.random() * availableExercises.length)];
+        isolationExercises.push(randomExercise);
+        if (randomExercise.exerciseFamily) usedFamilies.add(randomExercise.exerciseFamily);
+        groupCounts[targetGroup]++;
+        console.log(`Added ${targetGroup} exercise: ${randomExercise.name}`);
+      } else {
+        // Allow family conflicts if necessary
+        const allGroupExercises = [
+          ...(isolationByGroup[targetGroup] || []),
+          ...(compoundByGroup[targetGroup] || [])
+        ];
+        
+        if (allGroupExercises.length > 0) {
+          const randomExercise = allGroupExercises[Math.floor(Math.random() * allGroupExercises.length)];
+          isolationExercises.push(randomExercise);
+          groupCounts[targetGroup]++;
+          console.log(`Added ${targetGroup} exercise (family conflict): ${randomExercise.name}`);
+        }
+      }
+    } else {
+      // If all groups are balanced, add remaining full body exercises or any available exercise
+      const remainingFullBody = [...fullBodyIsolation, ...fullBodyCompound].filter(ex => 
+        !compoundExercises.includes(ex) && 
+        !isolationExercises.includes(ex) &&
+        (!ex.exerciseFamily || !usedFamilies.has(ex.exerciseFamily))
+      );
+      
+      if (remainingFullBody.length > 0) {
+        const randomExercise = remainingFullBody[Math.floor(Math.random() * remainingFullBody.length)];
+        isolationExercises.push(randomExercise);
+        if (randomExercise.exerciseFamily) usedFamilies.add(randomExercise.exerciseFamily);
+        console.log(`Added remaining full body: ${randomExercise.name}`);
+      } else {
+        // Pick any remaining exercise
+        const allRemaining = allExercises.filter(ex => 
+          !compoundExercises.includes(ex) && 
+          !isolationExercises.includes(ex) &&
+          (!ex.exerciseFamily || !usedFamilies.has(ex.exerciseFamily))
+        );
+        
+        if (allRemaining.length > 0) {
+          const randomExercise = allRemaining[Math.floor(Math.random() * allRemaining.length)];
+          isolationExercises.push(randomExercise);
+          if (randomExercise.exerciseFamily) usedFamilies.add(randomExercise.exerciseFamily);
+          console.log(`Added any remaining: ${randomExercise.name}`);
+        }
+      }
+    }
+  }
+  
+  // Combine compound and isolation exercises (compound first for workout structure)
+  selectedExercises.push(...compoundExercises);
+  selectedExercises.push(...isolationExercises);
+  
+  // Log the final distribution
+  const finalDistribution = {};
+  selectedExercises.forEach(ex => {
+    if (!finalDistribution[ex.muscleGroup]) finalDistribution[ex.muscleGroup] = 0;
+    finalDistribution[ex.muscleGroup]++;
+  });
+  
+  console.log('Final muscle group distribution:', finalDistribution);
+  console.log(`Selected ${selectedExercises.length} exercises total`);
+  
+  return selectedExercises.slice(0, targetCount);
+}
+
+/**
  * Smart exercise selection that avoids duplicates from the same family
  * AND maintains compound movements at the start of the workout
+ * (This is the original function for targeted workouts)
  */
 function selectExercisesAvoidingDuplicates(exercises, targetCount, goal) {
   const selectedExercises = [];
@@ -690,7 +910,8 @@ function generateFallbackWorkout(focus, goal, equipment, duration, style, blackl
   allExercises = allExercises.filter(exercise => !blacklist.includes(exercise.name));
   
   // **Apply family-aware selection with compound-first ordering to fallback workouts**
-  const selectedExercises = selectExercisesAvoidingDuplicates(allExercises, exerciseCount, goal);
+  const isFullBodyWorkout = focus.includes('full_body');
+  const selectedExercises = selectExercisesAvoidingDuplicatesEnhanced(allExercises, exerciseCount, goal, isFullBodyWorkout);
   
   // Create the workout object
   return {
