@@ -525,13 +525,17 @@ function updateExerciseCard(exerciseIndex, newExercise) {
   
   if (currentWorkout.goal === 'cardio' || newExercise.reps.includes('seconds')) {
     repsDisplay = newExercise.reps;
+    // Add "per side" for unilateral exercises
+    if (newExercise.isUnilateral) {
+      repsDisplay += ' per side';
+    }
   } else {
     repsDisplay = `${newExercise.reps} reps`;
     if (newExercise.isUnilateral) {
       repsDisplay += ' per side';
     }
   }
-  
+
   // Determine rest times based on goal and exercise type
   let restBetweenSets, restAfterExercise;
   
@@ -812,6 +816,11 @@ function displayWorkout(workout) {
     if (workout.goal === 'cardio' || exercise.reps.includes('seconds')) {
         // For cardio workouts or exercises with seconds, show time
         repsDisplay = exercise.reps;
+        
+        // Add "per side" for unilateral exercises
+        if (exercise.isUnilateral) {
+          repsDisplay += ' per side';
+        }
     } else {
         // For strength/regular workouts, show reps
         repsDisplay = `${exercise.reps} reps`;
