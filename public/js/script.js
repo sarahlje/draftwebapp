@@ -304,7 +304,311 @@ function validateForm() {
     return true;
 }
 
-// Updated displayWorkout function with blacklist functionality
+/**
+ * Find a replacement exercise that matches the criteria of the hidden exercise
+ */
+async function findReplacementExercise(hiddenExercise, currentWorkout) {
+  try {
+    const blacklist = getBlacklistedExercises();
+    
+    // Create search criteria based on the hidden exercise
+    const searchCriteria = {
+      muscleGroup: hiddenExercise.muscleGroup,
+      goal: currentWorkout.goal,
+      equipment: currentWorkout.equipment,
+      isCompound: hiddenExercise.isCompound, // Try to match compound/isolation type
+      excludeNames: [
+        ...blacklist,
+        hiddenExercise.name,
+        ...currentWorkout.exercises.map(ex => ex.name) // Exclude current workout exercises
+      ]
+    };
+    
+    console.log('Searching for replacement with criteria:', searchCriteria);
+    
+    // Call API to find replacement
+    const response = await fetch('/api/find-replacement-exercise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(searchCriteria)
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to find replacement exercise');
+    }
+    
+    const replacementExercise = await response.json();
+    
+    if (replacementExercise) {
+      // Apply the same sets/reps as the original exercise
+      replacementExercise.sets = hiddenExercise.sets;
+      replacementExercise.reps = hiddenExercise.reps;
+      
+      // Ensure tips exist
+      if (!replacementExercise.tips || replacementExercise.tips.length === 0) {
+        replacementExercise.tips = [
+          "Keep proper form throughout the exercise",
+          "Breathe steadily during the movement",
+          "Focus on controlled movements"
+        ];
+      }
+    }
+    
+    return replacementExercise;
+    
+  } catch (error) {
+    console.error('Error finding replacement exercise:', error);
+    return null;
+  }
+}
+
+/**
+ * Enhanced hide exercise function with instant replacement
+ */
+async function hideExerciseWithReplacement(exerciseName, exerciseIndex) {
+  const currentWorkout = window.currentWorkout;
+  
+  if (!currentWorkout || !currentWorkout.exercises[exerciseIndex]) {
+    console.error('Current workout or exercise not found');
+    return;
+  }
+  
+  const exerciseToHide = currentWorkout.exercises[exerciseIndex];
+  
+  // Show loading state
+  const exerciseCard = document.querySelector(`[data-exercise-index="${exerciseIndex}"]`);
+  const hideButton = exerciseCard.querySelector('.blacklist-exercise-btn');
+  
+  if (hideButton) {
+    hideButton.textContent = 'Finding replacement...';
+    hideButton.disabled = true;
+  }
+  
+  // Add overlay to show loading
+  exerciseCard.style.position = 'relative';
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'loading-overlay';
+  loadingOverlay.innerHTML = `
+    <div style="
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      z-index: 10;
+    ">
+      <div style="text-align: center; color: #4a5568;">
+        <div style="margin-bottom: 8px;">🔄</div>
+        <div style="font-size: 14px;">Finding replacement...</div>
+      </div>
+    </div>
+  `;
+  exerciseCard.appendChild(loadingOverlay);
+  
+  try {
+    // 1. Add to blacklist
+    if (blacklistExercise(exerciseName)) {
+      console.log(`Added ${exerciseName} to blacklist`);
+    }
+    
+    // 2. Find replacement
+    const replacementExercise = await findReplacementExercise(exerciseToHide, currentWorkout);
+    
+    if (replacementExercise) {
+      // 3. Update the workout data
+      currentWorkout.exercises[exerciseIndex] = replacementExercise;
+      
+      // 4. Update the UI with the new exercise
+      updateExerciseCard(exerciseIndex, replacementExercise);
+      
+      // 5. Update localStorage
+      localStorage.setItem('currentWorkout', JSON.stringify(currentWorkout));
+      
+      // 6. Show success message
+      showNotification(`Replaced "${exerciseName}" with "${replacementExercise.name}"`, 'success');
+      
+    } else {
+      // No replacement found - remove the exercise entirely
+      currentWorkout.exercises.splice(exerciseIndex, 1);
+      
+      // Remove the exercise card from UI
+      exerciseCard.remove();
+      
+      // Update exercise numbering
+      updateExerciseNumbering();
+      
+      // Update localStorage
+      localStorage.setItem('currentWorkout', JSON.stringify(currentWorkout));
+      
+      showNotification(`Removed "${exerciseName}" - no suitable replacement found`, 'warning');
+    }
+    
+  } catch (error) {
+    console.error('Error replacing exercise:', error);
+    
+    // Reset button state on error
+    if (hideButton) {
+      hideButton.textContent = 'Hide';
+      hideButton.disabled = false;
+    }
+    
+    showNotification('Failed to replace exercise. Try regenerating the workout.', 'error');
+  } finally {
+    // Remove loading overlay
+    if (loadingOverlay && loadingOverlay.parentNode) {
+      loadingOverlay.parentNode.removeChild(loadingOverlay);
+    }
+  }
+}
+
+/**
+ * Update an exercise card with new exercise data
+ */
+function updateExerciseCard(exerciseIndex, newExercise) {
+  const exerciseCard = document.querySelector(`[data-exercise-index="${exerciseIndex}"]`);
+  
+  if (!exerciseCard) {
+    console.error(`Exercise card not found for index ${exerciseIndex}`);
+    return;
+  }
+  
+  // Determine the correct rep/time display format
+  let repsDisplay;
+  const currentWorkout = window.currentWorkout;
+  
+  if (currentWorkout.goal === 'cardio' || newExercise.reps.includes('seconds')) {
+    repsDisplay = newExercise.reps;
+  } else {
+    repsDisplay = `${newExercise.reps} reps`;
+    if (newExercise.isUnilateral) {
+      repsDisplay += ' per side';
+    }
+  }
+  
+  // Check if the exercise has a video
+  const hasVideo = newExercise.videoUrl ? 'has-video' : '';
+  
+  // Update the card content with animation
+  exerciseCard.style.transition = 'transform 0.3s ease';
+  exerciseCard.style.transform = 'scale(0.95)';
+  
+  setTimeout(() => {
+    exerciseCard.innerHTML = `
+      <h4>${exerciseIndex + 1}. ${newExercise.name}</h4>
+      <img src="${newExercise.imageUrl || '/api/placeholder/150/150'}" alt="${newExercise.name}">
+      <p>${newExercise.sets} sets × ${repsDisplay}</p>
+      <div class="exercise-actions">
+          <button class="view-exercise-btn" data-index="${exerciseIndex}">Details</button>
+          <button class="blacklist-exercise-btn" data-exercise="${newExercise.name}">Hide</button>
+      </div>
+    `;
+    
+    // Update class for video indicator
+    exerciseCard.className = `exercise-card ${hasVideo}`;
+    
+    // Re-add event listeners
+    const detailsBtn = exerciseCard.querySelector('.view-exercise-btn');
+    const hideBtn = exerciseCard.querySelector('.blacklist-exercise-btn');
+    
+    detailsBtn.addEventListener('click', () => {
+      showExerciseDetails(exerciseIndex);
+    });
+    
+    hideBtn.addEventListener('click', () => {
+      if (confirm(`Hide "${newExercise.name}"? This will find a replacement exercise.`)) {
+        hideExerciseWithReplacement(newExercise.name, exerciseIndex);
+      }
+    });
+    
+    // Animate back to normal
+    exerciseCard.style.transform = 'scale(1)';
+    
+    // Add a subtle highlight to show the change
+    exerciseCard.style.background = '#e6fffa';
+    setTimeout(() => {
+      exerciseCard.style.background = '';
+    }, 2000);
+    
+  }, 150);
+}
+
+/**
+ * Update exercise numbering after removal
+ */
+function updateExerciseNumbering() {
+  const exerciseCards = document.querySelectorAll('.exercise-card');
+  exerciseCards.forEach((card, index) => {
+    const heading = card.querySelector('h4');
+    if (heading) {
+      const exerciseName = heading.textContent.replace(/^\d+\.\s*/, '');
+      heading.textContent = `${index + 1}. ${exerciseName}`;
+    }
+    
+    // Update data attributes
+    card.setAttribute('data-exercise-index', index);
+    
+    // Update button data attributes
+    const detailsBtn = card.querySelector('.view-exercise-btn');
+    if (detailsBtn) {
+      detailsBtn.setAttribute('data-index', index);
+    }
+  });
+}
+
+/**
+ * Show notification to user
+ */
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+  `;
+  
+  // Set background color based on type
+  const colors = {
+    success: '#48bb78',
+    warning: '#ed8936',
+    error: '#f56565',
+    info: '#4299e1'
+  };
+  notification.style.backgroundColor = colors[type] || colors.info;
+  
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  // Animate in
+  setTimeout(() => {
+    notification.style.transform = 'translateX(0)';
+  }, 100);
+  
+  // Auto remove
+  setTimeout(() => {
+    notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
+
+// Updated displayWorkout function with instant replacement functionality
 function displayWorkout(workout) {
   const workoutResult = document.getElementById('workout-result');
   workoutResult.innerHTML = ''; // Clear previous results
@@ -404,7 +708,7 @@ function displayWorkout(workout) {
     const hasVideo = exercise.videoUrl ? 'has-video' : '';
     
     const exerciseHTML = `
-        <div class="exercise-card ${hasVideo}">
+        <div class="exercise-card ${hasVideo}" data-exercise-index="${index}">
             <h4>${index + 1}. ${exercise.name}</h4>
             <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
             <p>${exercise.sets} sets × ${repsDisplay}</p>
@@ -431,6 +735,9 @@ function displayWorkout(workout) {
   // Save the workout globally so we can access it in showExerciseDetails
   window.currentWorkout = workout;
   
+  // Store the current workout in localStorage for the image generator
+  localStorage.setItem('currentWorkout', JSON.stringify(workout));
+  
   // Add event listeners to exercise detail buttons
   document.querySelectorAll('.view-exercise-btn').forEach(button => {
     button.addEventListener('click', () => {
@@ -439,17 +746,14 @@ function displayWorkout(workout) {
     });
   });
   
-  // Add event listeners to blacklist buttons
+  // Add event listeners to blacklist buttons with instant replacement
   document.querySelectorAll('.blacklist-exercise-btn').forEach(button => {
     button.addEventListener('click', () => {
         const exerciseName = button.dataset.exercise;
-        if (confirm(`Hide "${exerciseName}"? This exercise won't appear in future workouts.`)) {
-            if (blacklistExercise(exerciseName)) {
-                button.textContent = '✓ Hidden';
-                button.disabled = true;
-                button.style.backgroundColor = '#666';
-                button.style.cursor = 'not-allowed';
-            }
+        const exerciseIndex = parseInt(button.closest('.exercise-card').dataset.exerciseIndex);
+        
+        if (confirm(`Hide "${exerciseName}"? This will find a replacement exercise.`)) {
+            hideExerciseWithReplacement(exerciseName, exerciseIndex);
         }
     });
   });

@@ -280,6 +280,316 @@ router.post('/generate-workout', async (req, res) => {
   }
 });
 
+// Add this AFTER your existing POST /generate-workout route
+// and BEFORE your POST /generate-workout-fallback route in routes/api.js
+
+// POST find replacement exercise
+router.post('/find-replacement-exercise', async (req, res) => {
+  try {
+    const { muscleGroup, goal, equipment, isCompound, excludeNames } = req.body;
+    
+    console.log('Finding replacement exercise with criteria:', req.body);
+    console.log('Excluded names:', excludeNames);
+    
+    // Create equipment filter that ALWAYS includes bodyweight exercises
+    let equipmentFilter;
+    if (equipment.includes('all')) {
+      equipmentFilter = {};
+    } else {
+      const equipmentWithBodyweight = [...new Set([...equipment, 'bodyweight'])];
+      equipmentFilter = { equipment: { in: equipmentWithBodyweight } };
+    }
+    
+    // Try multiple search strategies with decreasing specificity
+    const searchStrategies = [
+      // Strategy 1: Exact muscle group + compound preference
+      {
+        name: 'Exact muscle group + compound preference',
+        query: {
+          where: {
+            AND: [
+              { muscleGroup: muscleGroup },
+              { isCompound: isCompound },
+              goal === 'cardio' ? { excludeFromCardio: false } : {},
+              goal === 'strength' ? { excludeFromStrength: false } : {},
+              equipmentFilter,
+              { name: { notIn: excludeNames } }
+            ]
+          }
+        }
+      },
+      // Strategy 2: Exact muscle group (any compound type)
+      {
+        name: 'Exact muscle group (any compound type)',
+        query: {
+          where: {
+            AND: [
+              { muscleGroup: muscleGroup },
+              goal === 'cardio' ? { excludeFromCardio: false } : {},
+              goal === 'strength' ? { excludeFromStrength: false } : {},
+              equipmentFilter,
+              { name: { notIn: excludeNames } }
+            ]
+          }
+        }
+      },
+      // Strategy 3: Similar muscle groups + compound preference
+      {
+        name: 'Similar muscle groups + compound preference',
+        query: {
+          where: {
+            AND: [
+              {
+                OR: [
+                  { muscleGroup: muscleGroup },
+                  { muscleGroup: 'full_body' },
+                  // Add similar muscle group mappings
+                  ...(muscleGroup === 'chest' ? [{ muscleGroup: 'arms' }] : []),
+                  ...(muscleGroup === 'back' ? [{ muscleGroup: 'arms' }] : []),
+                  ...(muscleGroup === 'legs' ? [{ muscleGroup: 'glutes' }] : []),
+                  ...(muscleGroup === 'glutes' ? [{ muscleGroup: 'legs' }] : []),
+                  ...(muscleGroup === 'arms' ? [{ muscleGroup: 'chest' }, { muscleGroup: 'back' }] : []),
+                  ...(muscleGroup === 'shoulders' ? [{ muscleGroup: 'arms' }, { muscleGroup: 'chest' }] : [])
+                ]
+              },
+              { isCompound: isCompound },
+              goal === 'cardio' ? { excludeFromCardio: false } : {},
+              goal === 'strength' ? { excludeFromStrength: false } : {},
+              equipmentFilter,
+              { name: { notIn: excludeNames } }
+            ]
+          }
+        }
+      },
+      // Strategy 4: Similar muscle groups (any compound type)
+      {
+        name: 'Similar muscle groups (any compound type)',
+        query: {
+          where: {
+            AND: [
+              {
+                OR: [
+                  { muscleGroup: muscleGroup },
+                  { muscleGroup: 'full_body' },
+                  ...(muscleGroup === 'chest' ? [{ muscleGroup: 'arms' }] : []),
+                  ...(muscleGroup === 'back' ? [{ muscleGroup: 'arms' }] : []),
+                  ...(muscleGroup === 'legs' ? [{ muscleGroup: 'glutes' }] : []),
+                  ...(muscleGroup === 'glutes' ? [{ muscleGroup: 'legs' }] : []),
+                  ...(muscleGroup === 'arms' ? [{ muscleGroup: 'chest' }, { muscleGroup: 'back' }] : []),
+                  ...(muscleGroup === 'shoulders' ? [{ muscleGroup: 'arms' }, { muscleGroup: 'chest' }] : [])
+                ]
+              },
+              goal === 'cardio' ? { excludeFromCardio: false } : {},
+              goal === 'strength' ? { excludeFromStrength: false } : {},
+              equipmentFilter,
+              { name: { notIn: excludeNames } }
+            ]
+          }
+        }
+      },
+      // Strategy 5: Any exercise that fits equipment and goal (last resort)
+      {
+        name: 'Any compatible exercise',
+        query: {
+          where: {
+            AND: [
+              goal === 'cardio' ? { excludeFromCardio: false } : {},
+              goal === 'strength' ? { excludeFromStrength: false } : {},
+              equipmentFilter,
+              { name: { notIn: excludeNames } }
+            ]
+          }
+        }
+      }
+    ];
+    
+    // Try each strategy until we find exercises
+    for (const strategy of searchStrategies) {
+      console.log(`Trying strategy: ${strategy.name}`);
+      console.log('Query:', JSON.stringify(strategy.query, null, 2));
+      
+      const matchingExercises = await prisma.exercise.findMany(strategy.query);
+      console.log(`Found ${matchingExercises.length} exercises with strategy: ${strategy.name}`);
+      
+      if (matchingExercises.length > 0) {
+        // Randomly select one exercise from the matches
+        const randomIndex = Math.floor(Math.random() * matchingExercises.length);
+        const selectedExercise = matchingExercises[randomIndex];
+        
+        console.log(`Selected replacement: ${selectedExercise.name} (muscle: ${selectedExercise.muscleGroup}, compound: ${selectedExercise.isCompound})`);
+        
+        return res.json(selectedExercise);
+      }
+    }
+    
+    // If all strategies fail, try fallback exercises
+    console.log('All database strategies failed, trying fallback exercises');
+    const fallbackExercise = findFallbackReplacement(muscleGroup, isCompound, excludeNames, goal);
+    
+    if (fallbackExercise) {
+      console.log(`Using fallback exercise: ${fallbackExercise.name}`);
+      return res.json(fallbackExercise);
+    }
+    
+    console.log('No replacement exercises found at all');
+    return res.json(null);
+    
+  } catch (err) {
+    console.error('Error finding replacement exercise:', err);
+    res.status(500).json({ error: 'Failed to find replacement exercise' });
+  }
+});
+
+// Enhanced fallback function with more exercises
+function findFallbackReplacement(muscleGroup, isCompound, excludeNames, goal) {
+  console.log(`Looking for fallback replacement for ${muscleGroup}, compound: ${isCompound}, goal: ${goal}`);
+  
+  // Enhanced fallback exercises with more variety
+  const fallbackExercises = {
+    chest: {
+      compound: [
+        { name: 'Push-Up', isCompound: true, muscleGroup: 'chest', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Incline Push-Up', isCompound: true, muscleGroup: 'chest', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Decline Push-Up', isCompound: true, muscleGroup: 'chest', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Wide-Grip Push-Up', isCompound: true, muscleGroup: 'chest', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Chest Squeeze', isCompound: false, muscleGroup: 'chest', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Wall Push-Up', isCompound: false, muscleGroup: 'chest', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    legs: {
+      compound: [
+        { name: 'Bodyweight Squat', isCompound: true, muscleGroup: 'legs', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Jump Squat', isCompound: true, muscleGroup: 'legs', equipment: 'bodyweight', category: 'cardio' },
+        { name: 'Lunges', isCompound: true, muscleGroup: 'legs', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Step-Ups', isCompound: true, muscleGroup: 'legs', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Single Leg Squat', isCompound: true, muscleGroup: 'legs', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Calf Raises', isCompound: false, muscleGroup: 'legs', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Wall Sit', isCompound: false, muscleGroup: 'legs', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    back: {
+      compound: [
+        { name: 'Superman Hold', isCompound: true, muscleGroup: 'back', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Reverse Snow Angel', isCompound: true, muscleGroup: 'back', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Prone Y Raise', isCompound: false, muscleGroup: 'back', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Prone T Raise', isCompound: false, muscleGroup: 'back', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    core: {
+      compound: [
+        { name: 'Plank', isCompound: false, muscleGroup: 'core', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Side Plank', isCompound: false, muscleGroup: 'core', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Dead Bug', isCompound: false, muscleGroup: 'core', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Crunches', isCompound: false, muscleGroup: 'core', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Bicycle Crunches', isCompound: false, muscleGroup: 'core', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Leg Raises', isCompound: false, muscleGroup: 'core', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    arms: {
+      compound: [
+        { name: 'Pike Push-Up', isCompound: true, muscleGroup: 'arms', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Diamond Push-Up', isCompound: true, muscleGroup: 'arms', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Tricep Dips', isCompound: false, muscleGroup: 'arms', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Wall Handstand Hold', isCompound: false, muscleGroup: 'arms', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    shoulders: {
+      compound: [
+        { name: 'Pike Push-Up', isCompound: true, muscleGroup: 'shoulders', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Handstand Push-Up', isCompound: true, muscleGroup: 'shoulders', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Arm Circles', isCompound: false, muscleGroup: 'shoulders', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Shoulder Shrugs', isCompound: false, muscleGroup: 'shoulders', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    glutes: {
+      compound: [
+        { name: 'Glute Bridge', isCompound: true, muscleGroup: 'glutes', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Single-Leg Glute Bridge', isCompound: true, muscleGroup: 'glutes', equipment: 'bodyweight', category: 'strength' }
+      ],
+      isolation: [
+        { name: 'Clamshells', isCompound: false, muscleGroup: 'glutes', equipment: 'bodyweight', category: 'strength' },
+        { name: 'Fire Hydrants', isCompound: false, muscleGroup: 'glutes', equipment: 'bodyweight', category: 'strength' }
+      ]
+    },
+    full_body: {
+      compound: [
+        { name: 'Burpee', isCompound: true, muscleGroup: 'full_body', equipment: 'bodyweight', category: 'cardio' },
+        { name: 'Mountain Climbers', isCompound: true, muscleGroup: 'full_body', equipment: 'bodyweight', category: 'cardio' },
+        { name: 'Jumping Jacks', isCompound: true, muscleGroup: 'full_body', equipment: 'bodyweight', category: 'cardio' },
+        { name: 'High Knees', isCompound: true, muscleGroup: 'full_body', equipment: 'bodyweight', category: 'cardio' }
+      ],
+      isolation: []
+    }
+  };
+  
+  // Get exercises for the target muscle group
+  const muscleGroupExercises = fallbackExercises[muscleGroup];
+  if (!muscleGroupExercises) {
+    console.log(`No fallback exercises found for muscle group: ${muscleGroup}`);
+    return null;
+  }
+  
+  // Try to match compound/isolation preference
+  const preferredType = isCompound ? 'compound' : 'isolation';
+  const fallbackType = isCompound ? 'isolation' : 'compound';
+  
+  let candidates = muscleGroupExercises[preferredType] || [];
+  
+  // Filter by goal if specified
+  if (goal === 'cardio') {
+    candidates = candidates.filter(ex => ex.category === 'cardio');
+  } else if (goal === 'strength') {
+    candidates = candidates.filter(ex => ex.category === 'strength');
+  }
+  
+  // If no candidates with preferred type, try the other type
+  if (candidates.length === 0) {
+    candidates = muscleGroupExercises[fallbackType] || [];
+    if (goal === 'cardio') {
+      candidates = candidates.filter(ex => ex.category === 'cardio');
+    } else if (goal === 'strength') {
+      candidates = candidates.filter(ex => ex.category === 'strength');
+    }
+  }
+  
+  // Filter out excluded exercises
+  candidates = candidates.filter(ex => !excludeNames.includes(ex.name));
+  
+  console.log(`Found ${candidates.length} fallback candidates for ${muscleGroup}`);
+  
+  if (candidates.length === 0) {
+    // Last resort: try full_body exercises
+    console.log('Trying full_body exercises as last resort');
+    let fullBodyCandidates = fallbackExercises.full_body.compound || [];
+    fullBodyCandidates = fullBodyCandidates.filter(ex => !excludeNames.includes(ex.name));
+    
+    if (fullBodyCandidates.length > 0) {
+      const selected = fullBodyCandidates[Math.floor(Math.random() * fullBodyCandidates.length)];
+      console.log(`Selected full_body fallback: ${selected.name}`);
+      return selected;
+    }
+    
+    return null;
+  }
+  
+  // Return random candidate
+  const selected = candidates[Math.floor(Math.random() * candidates.length)];
+  console.log(`Selected fallback: ${selected.name}`);
+  return selected;
+}
+
 /**
  * Enhanced exercise selection that uses different logic for full body vs targeted workouts
  */
