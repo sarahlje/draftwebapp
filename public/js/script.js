@@ -316,15 +316,24 @@ async function findReplacementExercise(hiddenExercise, currentWorkout) {
       muscleGroup: hiddenExercise.muscleGroup,
       goal: currentWorkout.goal,
       equipment: currentWorkout.equipment,
-      isCompound: hiddenExercise.isCompound, // Try to match compound/isolation type
+      isCompound: hiddenExercise.isCompound,
       excludeNames: [
         ...blacklist,
         hiddenExercise.name,
-        ...currentWorkout.exercises.map(ex => ex.name) // Exclude current workout exercises
+        ...currentWorkout.exercises.map(ex => ex.name)
       ]
     };
     
-    console.log('Searching for replacement with criteria:', searchCriteria);
+    console.log('=== REPLACEMENT SEARCH DEBUG ===');
+    console.log('Hidden exercise:', hiddenExercise.name);
+    console.log('Muscle group:', hiddenExercise.muscleGroup);
+    console.log('Is compound:', hiddenExercise.isCompound);
+    console.log('Current workout goal:', currentWorkout.goal);
+    console.log('Available equipment:', currentWorkout.equipment);
+    console.log('Blacklisted exercises:', blacklist);
+    console.log('Current workout exercises:', currentWorkout.exercises.map(ex => ex.name));
+    console.log('Total excluded names:', searchCriteria.excludeNames);
+    console.log('Search criteria:', searchCriteria);
     
     // Call API to find replacement
     const response = await fetch('/api/find-replacement-exercise', {
@@ -333,11 +342,16 @@ async function findReplacementExercise(hiddenExercise, currentWorkout) {
       body: JSON.stringify(searchCriteria)
     });
     
+    console.log('API response status:', response.status);
+    
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
       throw new Error('Failed to find replacement exercise');
     }
     
     const replacementExercise = await response.json();
+    console.log('API returned:', replacementExercise);
     
     if (replacementExercise) {
       // Apply the same sets/reps as the original exercise
@@ -352,7 +366,13 @@ async function findReplacementExercise(hiddenExercise, currentWorkout) {
           "Focus on controlled movements"
         ];
       }
+      
+      console.log('Final replacement exercise:', replacementExercise);
+    } else {
+      console.log('No replacement exercise found');
     }
+    
+    console.log('=== END REPLACEMENT SEARCH DEBUG ===');
     
     return replacementExercise;
     
@@ -370,6 +390,7 @@ async function hideExerciseWithReplacement(exerciseName, exerciseIndex) {
   
   if (!currentWorkout || !currentWorkout.exercises[exerciseIndex]) {
     console.error('Current workout or exercise not found');
+    showNotification('Error: Workout data not found', 'error');
     return;
   }
   
@@ -433,19 +454,40 @@ async function hideExerciseWithReplacement(exerciseName, exerciseIndex) {
       showNotification(`Replaced "${exerciseName}" with "${replacementExercise.name}"`, 'success');
       
     } else {
-      // No replacement found - remove the exercise entirely
-      currentWorkout.exercises.splice(exerciseIndex, 1);
+      // No replacement found - give user options
+      const userChoice = confirm(
+        `No suitable replacement found for "${exerciseName}". \n\n` +
+        `Would you like to:\n` +
+        `• OK - Remove this exercise from the workout\n` +
+        `• Cancel - Keep the exercise and try regenerating the entire workout instead`
+      );
       
-      // Remove the exercise card from UI
-      exerciseCard.remove();
-      
-      // Update exercise numbering
-      updateExerciseNumbering();
-      
-      // Update localStorage
-      localStorage.setItem('currentWorkout', JSON.stringify(currentWorkout));
-      
-      showNotification(`Removed "${exerciseName}" - no suitable replacement found`, 'warning');
+      if (userChoice) {
+        // User chose to remove the exercise
+        currentWorkout.exercises.splice(exerciseIndex, 1);
+        
+        // Remove the exercise card from UI
+        exerciseCard.remove();
+        
+        // Update exercise numbering
+        updateExerciseNumbering();
+        
+        // Update localStorage
+        localStorage.setItem('currentWorkout', JSON.stringify(currentWorkout));
+        
+        showNotification(`Removed "${exerciseName}" from workout`, 'info');
+      } else {
+        // User chose to keep the exercise - remove from blacklist and reset UI
+        removeFromBlacklist(exerciseName);
+        
+        // Reset button state
+        if (hideButton) {
+          hideButton.textContent = 'Hide';
+          hideButton.disabled = false;
+        }
+        
+        showNotification('Exercise kept. Try regenerating the workout for more variety.', 'info');
+      }
     }
     
   } catch (error) {
@@ -467,7 +509,7 @@ async function hideExerciseWithReplacement(exerciseName, exerciseIndex) {
 }
 
 /**
- * Update an exercise card with new exercise data
+ * Update an exercise card with new exercise data (including rest instructions)
  */
 function updateExerciseCard(exerciseIndex, newExercise) {
   const exerciseCard = document.querySelector(`[data-exercise-index="${exerciseIndex}"]`);
@@ -490,8 +532,30 @@ function updateExerciseCard(exerciseIndex, newExercise) {
     }
   }
   
+  // Determine rest times based on goal and exercise type
+  let restBetweenSets, restAfterExercise;
+  
+  if (currentWorkout.goal === 'cardio') {
+      restBetweenSets = '30-45 seconds';
+      restAfterExercise = '60-90 seconds';
+  } else if (currentWorkout.goal === 'strength') {
+      if (newExercise.isCompound) {
+          restBetweenSets = '2-3 minutes';
+          restAfterExercise = '3-4 minutes';
+      } else {
+          restBetweenSets = '60-90 seconds';
+          restAfterExercise = '2-3 minutes';
+      }
+  } else { // general_fitness
+      restBetweenSets = '60-90 seconds';
+      restAfterExercise = '2-3 minutes';
+  }
+  
   // Check if the exercise has a video
   const hasVideo = newExercise.videoUrl ? 'has-video' : '';
+  
+  // Check if this is the last exercise
+  const isLastExercise = exerciseIndex === currentWorkout.exercises.length - 1;
   
   // Update the card content with animation
   exerciseCard.style.transition = 'transform 0.3s ease';
@@ -501,7 +565,29 @@ function updateExerciseCard(exerciseIndex, newExercise) {
     exerciseCard.innerHTML = `
       <h4>${exerciseIndex + 1}. ${newExercise.name}</h4>
       <img src="${newExercise.imageUrl || '/api/placeholder/150/150'}" alt="${newExercise.name}">
-      <p>${newExercise.sets} sets × ${repsDisplay}</p>
+      
+      <div class="exercise-details">
+          <p class="sets-reps"><strong>${newExercise.sets} sets × ${repsDisplay}</strong></p>
+          
+          <div class="rest-instructions">
+              <div class="rest-between-sets">
+                  <span class="rest-icon">⏱️</span>
+                  <span class="rest-text">Rest ${restBetweenSets} between sets</span>
+              </div>
+              ${!isLastExercise ? `
+                  <div class="rest-after-exercise">
+                      <span class="rest-icon">⏸️</span>
+                      <span class="rest-text">Rest ${restAfterExercise} before next exercise</span>
+                  </div>
+              ` : `
+                  <div class="rest-after-exercise">
+                      <span class="rest-icon">🎉</span>
+                      <span class="rest-text">Workout complete!</span>
+                  </div>
+              `}
+          </div>
+      </div>
+      
       <div class="exercise-actions">
           <button class="view-exercise-btn" data-index="${exerciseIndex}">Details</button>
           <button class="blacklist-exercise-btn" data-exercise="${newExercise.name}">Hide</button>
@@ -608,7 +694,7 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
-// Updated displayWorkout function with instant replacement functionality
+// Updated displayWorkout function with rest instructions
 function displayWorkout(workout) {
   const workoutResult = document.getElementById('workout-result');
   workoutResult.innerHTML = ''; // Clear previous results
@@ -662,7 +748,7 @@ function displayWorkout(workout) {
   `;
   workoutResult.insertAdjacentHTML('beforeend', summaryHTML);
   
-  // Add recommended warm-up and cool-down
+  // Add recommended warm-up
   const warmupHTML = `
     <div class="workout-section">
       <h4>Recommended Warm-up (5 min)</h4>
@@ -670,6 +756,38 @@ function displayWorkout(workout) {
     </div>
   `;
   workoutResult.insertAdjacentHTML('beforeend', warmupHTML);
+  
+  // Add general rest guidelines
+  const generalRestHTML = `
+    <div class="workout-section rest-guidelines">
+        <h4>💡 Rest Guidelines</h4>
+        <div class="rest-guidelines-content">
+            <div class="rest-guideline">
+                <strong>Between Sets:</strong> ${workout.goal === 'cardio' ? '30-45 seconds' : 
+                    workout.goal === 'strength' ? '1-3 minutes' : '60-90 seconds'}
+                <span class="rest-explanation">
+                    ${workout.goal === 'cardio' ? 'Keep heart rate elevated' : 
+                      workout.goal === 'strength' ? 'Allow muscle recovery for max strength' : 
+                      'Balance recovery with workout intensity'}
+                </span>
+            </div>
+            <div class="rest-guideline">
+                <strong>Between Exercises:</strong> ${workout.goal === 'cardio' ? '60-90 seconds' : 
+                    workout.goal === 'strength' ? '2-4 minutes' : '2-3 minutes'}
+                <span class="rest-explanation">
+                    Transition time and preparation for next movement
+                </span>
+            </div>
+            <div class="rest-guideline">
+                <strong>Listen to your body:</strong> Rest longer if needed for proper form
+                <span class="rest-explanation">
+                    Quality over speed - never sacrifice form for time
+                </span>
+            </div>
+        </div>
+    </div>
+  `;
+  workoutResult.insertAdjacentHTML('beforeend', generalRestHTML);
   
   // Add event listeners to buttons
   document.getElementById('regenerate-btn').addEventListener('click', regenerateWorkout);
@@ -704,14 +822,58 @@ function displayWorkout(workout) {
         }
     }
     
+    // Determine rest times based on goal and exercise type
+    let restBetweenSets, restAfterExercise;
+    
+    if (workout.goal === 'cardio') {
+        restBetweenSets = '30-45 seconds';
+        restAfterExercise = '60-90 seconds';
+    } else if (workout.goal === 'strength') {
+        if (exercise.isCompound) {
+            restBetweenSets = '2-3 minutes';
+            restAfterExercise = '3-4 minutes';
+        } else {
+            restBetweenSets = '60-90 seconds';
+            restAfterExercise = '2-3 minutes';
+        }
+    } else { // general_fitness
+        restBetweenSets = '60-90 seconds';
+        restAfterExercise = '2-3 minutes';
+    }
+    
     // Check if the exercise has a video
     const hasVideo = exercise.videoUrl ? 'has-video' : '';
+    
+    // Determine if this is the last exercise
+    const isLastExercise = index === workout.exercises.length - 1;
     
     const exerciseHTML = `
         <div class="exercise-card ${hasVideo}" data-exercise-index="${index}">
             <h4>${index + 1}. ${exercise.name}</h4>
             <img src="${exercise.imageUrl || '/api/placeholder/150/150'}" alt="${exercise.name}">
-            <p>${exercise.sets} sets × ${repsDisplay}</p>
+            
+            <div class="exercise-details">
+                <p class="sets-reps"><strong>${exercise.sets} sets × ${repsDisplay}</strong></p>
+                
+                <div class="rest-instructions">
+                    <div class="rest-between-sets">
+                        <span class="rest-icon">⏱️</span>
+                        <span class="rest-text">Rest ${restBetweenSets} between sets</span>
+                    </div>
+                    ${!isLastExercise ? `
+                        <div class="rest-after-exercise">
+                            <span class="rest-icon">⏸️</span>
+                            <span class="rest-text">Rest ${restAfterExercise} before next exercise</span>
+                        </div>
+                    ` : `
+                        <div class="rest-after-exercise">
+                            <span class="rest-icon">🎉</span>
+                            <span class="rest-text">Workout complete!</span>
+                        </div>
+                    `}
+                </div>
+            </div>
+            
             <div class="exercise-actions">
                 <button class="view-exercise-btn" data-index="${index}">Details</button>
                 <button class="blacklist-exercise-btn" data-exercise="${exercise.name}">Hide</button>
