@@ -761,37 +761,6 @@ function displayWorkout(workout) {
   `;
   workoutResult.insertAdjacentHTML('beforeend', warmupHTML);
   
-  // Add general rest guidelines
-  const generalRestHTML = `
-    <div class="workout-section rest-guidelines">
-        <h4>💡 Rest Guidelines</h4>
-        <div class="rest-guidelines-content">
-            <div class="rest-guideline">
-                <strong>Between Sets:</strong> ${workout.goal === 'cardio' ? '30-45 seconds' : 
-                    workout.goal === 'strength' ? '1-3 minutes' : '60-90 seconds'}
-                <span class="rest-explanation">
-                    ${workout.goal === 'cardio' ? 'Keep heart rate elevated' : 
-                      workout.goal === 'strength' ? 'Allow muscle recovery for max strength' : 
-                      'Balance recovery with workout intensity'}
-                </span>
-            </div>
-            <div class="rest-guideline">
-                <strong>Between Exercises:</strong> ${workout.goal === 'cardio' ? '60-90 seconds' : 
-                    workout.goal === 'strength' ? '2-4 minutes' : '2-3 minutes'}
-                <span class="rest-explanation">
-                    Transition time and preparation for next movement
-                </span>
-            </div>
-            <div class="rest-guideline">
-                <strong>Listen to your body:</strong> Rest longer if needed for proper form
-                <span class="rest-explanation">
-                    Quality over speed - never sacrifice form for time
-                </span>
-            </div>
-        </div>
-    </div>
-  `;
-  workoutResult.insertAdjacentHTML('beforeend', generalRestHTML);
   
   // Add event listeners to buttons
   document.getElementById('regenerate-btn').addEventListener('click', regenerateWorkout);
