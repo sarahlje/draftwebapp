@@ -55,10 +55,11 @@
   </header>
 
   <main>
-    <form id="workout-form">
+    <form id="workout-form" autocomplete="off">
       <fieldset>
         <legend>🎯 Fitness Goal</legend>
-        <select id="fitnessGoal" name="fitness-goal">
+        <select id="fitnessGoal" name="fitness-goal" autocomplete="off">
+          <option value="" disabled selected>Choose your fitness goal...</option>
           <option value="strength">Strength Training</option>
           <option value="cardio">Cardio Fitness</option>
           <option value="general_fitness">General Fitness</option>
@@ -79,7 +80,7 @@
       </fieldset>
 
       <fieldset>
-        <legend>💪 Focus Areas</legend>
+        <legend>💪 Body Parts to Focus On</legend>
         
         <div class="checkbox-group">
           <h4>Upper Body</h4>
@@ -197,7 +198,8 @@
 
       <fieldset>
         <legend>🎨 Workout Style</legend>
-        <select id="workout-style" name="workout-style">
+        <select id="workout-style" name="workout-style" autocomplete="off">
+          <option value="" disabled selected>Choose your workout style...</option>
           <option value="variety">Variety (More exercises, standard sets)</option>
           <option value="focus">Focus (Fewer exercises, more sets)</option>
         </select>
@@ -236,8 +238,31 @@
 
   <script src="/js/script.js"></script>
   <script>
-    // Navigation functionality
+    // Ensure form starts completely fresh
     document.addEventListener('DOMContentLoaded', function() {
+      // Clear all form inputs on page load
+      const form = document.getElementById('workout-form');
+      if (form) {
+        // Reset the entire form
+        form.reset();
+        
+        // Specifically uncheck all checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        
+        // Reset selects to default disabled options
+        document.getElementById('fitnessGoal').selectedIndex = 0;
+        document.getElementById('workout-style').selectedIndex = 0;
+        
+        // Reset slider to default
+        const durationSlider = document.getElementById('workout-duration');
+        if (durationSlider) {
+          durationSlider.value = 30;
+          document.getElementById('duration-value').textContent = '30 minutes';
+        }
+      }
+      
       // Mobile navigation toggle
       const mobileToggle = document.getElementById('mobile-nav-toggle');
       const navLinks = document.getElementById('nav-links');

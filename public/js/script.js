@@ -1,7 +1,7 @@
 // Load data and setup on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadExerciseDatabase();
-    loadPreferences();
+    //loadPreferences();
     setupEventListeners();
     
     // Check if we should show saved workouts based on URL parameter
