@@ -341,8 +341,9 @@ body.dark-mode .checkbox-group h4 {
   color: #9ca3af;
 }
 
-/* Special Checkboxes */
-.special-checkbox, .special-equipment {
+/* Special Checkboxes - Make them look like regular options */
+.checkbox-grid .special-checkbox, 
+.checkbox-grid .special-equipment {
   margin-top: 20px;
   padding: 0;
   background: none;
@@ -350,18 +351,38 @@ body.dark-mode .checkbox-group h4 {
   grid-column: 1 / -1;
 }
 
-.special-checkbox label,
-.special-equipment label {
-  background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
-  color: white;
-  border: none;
+.checkbox-grid .special-checkbox label,
+.checkbox-grid .special-equipment label {
+  background: #fff !important;
+  color: #4a5568 !important;
+  border: 2px solid var(--border-color) !important;
   font-weight: 600;
   padding: 16px 20px;
+  box-shadow: none;
 }
 
-body.dark-mode .special-checkbox label,
-body.dark-mode .special-equipment label {
-  background: linear-gradient(135deg, var(--primary-color-dark), #a78bfa);
+.checkbox-grid .special-checkbox input[type="checkbox"]:checked + label,
+.checkbox-grid .special-equipment input[type="checkbox"]:checked + label {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+body.dark-mode .checkbox-grid .special-checkbox label,
+body.dark-mode .checkbox-grid .special-equipment label {
+  background: #4a5568 !important;
+  border-color: var(--border-color-dark) !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-mode .checkbox-grid .special-checkbox input[type="checkbox"]:checked + label,
+body.dark-mode .checkbox-grid .special-equipment input[type="checkbox"]:checked + label {
+  background: var(--primary-color-dark) !important;
+  border-color: var(--primary-color-dark) !important;
+  color: white !important;
+  transform: translateY(-2px);
 }
 
 /* Option Descriptions */
