@@ -57,31 +57,30 @@
   <main>
     <form id="workout-form">
       <fieldset>
-        <legend>Fitness Goal</legend>
+        <legend>🎯 Fitness Goal</legend>
         <select id="fitnessGoal" name="fitness-goal">
-          <option value="strength">Strength</option>
-          <option value="cardio">Cardio</option>
+          <option value="strength">Strength Training</option>
+          <option value="cardio">Cardio Fitness</option>
           <option value="general_fitness">General Fitness</option>
         </select>
         <div class="option-description">
-          <p><strong>Strength</strong>: Focuses on building muscle and power with higher weights and lower reps.</p>
-          <p><strong>Cardio</strong>: Improves heart health and endurance with higher reps and shorter rest periods.</p>
-          <p><strong>General Fitness</strong>: Balanced approach for overall health, combining strength and cardio elements.</p>
+          <p><strong>Strength:</strong> Build muscle and power with heavier weights and lower reps</p>
+          <p><strong>Cardio:</strong> Improve heart health and endurance with higher reps and shorter rest</p>
+          <p><strong>General Fitness:</strong> Balanced approach combining strength and cardio elements</p>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>Time per Workout</legend>
+        <legend>⏱️ Workout Duration</legend>
         <div class="slider-container">
-          <input type="range" id="workout-duration" name="workout-duration" min="10" max="90" step="5" value="30" />
           <span id="duration-value">30 minutes</span>
+          <input type="range" id="workout-duration" name="workout-duration" min="10" max="90" step="5" value="30" />
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>Body Parts to Focus On</legend>
+        <legend>💪 Target Areas</legend>
         
-        <!-- Organized muscle groups -->
         <div class="checkbox-group">
           <h4>Upper Body</h4>
           <div class="checkbox-grid">
@@ -126,89 +125,89 @@
         <div class="checkbox-grid">
           <div class="checkbox-item special-checkbox">
             <input type="checkbox" id="full-body-checkbox" name="workout-focus" value="full_body" />
-            <label for="full-body-checkbox"><strong>Full Body</strong> (Workout targets all major muscle groups)</label>
+            <label for="full-body-checkbox"><strong>🔥 Full Body</strong> (Targets all major muscle groups)</label>
           </div>
         </div>
       </fieldset>
 
-<fieldset>
-  <legend>Available Equipment</legend>
-  
-  <!-- Group 1: Minimal equipment options -->
-  <div class="checkbox-group">
-    <h4>Minimal Equipment</h4>
-    <div class="equipment-grid">
-      <div class="checkbox-item">
-        <input type="checkbox" id="bodyweight-checkbox" name="equipment" value="bodyweight" class="equipment-checkbox" />
-        <label for="bodyweight-checkbox">Bodyweight Only</label>
-      </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="pullup-checkbox" name="equipment" value="pull_up_bar" class="equipment-checkbox" />
-        <label for="pullup-checkbox">Pull-up Bar</label>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Group 2: Free weights -->
-  <div class="checkbox-group">
-    <h4>Free Weights</h4>
-    <div class="equipment-grid">
-      <div class="checkbox-item">
-        <input type="checkbox" id="dumbbells-checkbox" name="equipment" value="dumbbells" class="equipment-checkbox" />
-        <label for="dumbbells-checkbox">Dumbbells</label>
-      </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="kettlebells-checkbox" name="equipment" value="kettlebells" class="equipment-checkbox" />
-        <label for="kettlebells-checkbox">Kettlebells</label>
-      </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="barbell-checkbox" name="equipment" value="barbell" class="equipment-checkbox" />
-        <label for="barbell-checkbox">Barbell</label>
-      </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="bench-checkbox" name="equipment" value="bench" class="equipment-checkbox" />
-        <label for="bench-checkbox">Bench</label>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Group 3: Machines -->
-  <div class="checkbox-group">
-    <h4>Machines</h4>
-    <div class="equipment-grid">
-      <div class="checkbox-item">
-        <input type="checkbox" id="treadmill-checkbox" name="equipment" value="treadmill" class="equipment-checkbox" />
-        <label for="treadmill-checkbox">Treadmill</label>
-      </div>
-      <div class="checkbox-item">
-        <input type="checkbox" id="cable-checkbox" name="equipment" value="cable_machines" class="equipment-checkbox" />
-        <label for="cable-checkbox">Cable Machine</label>
-      </div>
-    </div>
-  </div>
-  
-  <!-- All equipment as a special option -->
-  <div class="checkbox-grid">
-    <div class="checkbox-item special-equipment">
-      <input type="checkbox" id="all-equipment-checkbox" name="equipment" value="all" />
-      <label for="all-equipment-checkbox"><strong>All Equipment</strong> (Access to a full gym)</label>
-    </div>
-  </div>
-</fieldset>
+      <fieldset>
+        <legend>🏋️ Available Equipment</legend>
+        
+        <!-- Group 1: Minimal equipment options -->
+        <div class="checkbox-group">
+          <h4>Minimal Equipment</h4>
+          <div class="equipment-grid">
+            <div class="checkbox-item">
+              <input type="checkbox" id="bodyweight-checkbox" name="equipment" value="bodyweight" class="equipment-checkbox" />
+              <label for="bodyweight-checkbox">Bodyweight Only</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="pullup-checkbox" name="equipment" value="pull_up_bar" class="equipment-checkbox" />
+              <label for="pullup-checkbox">Pull-up Bar</label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Group 2: Free weights -->
+        <div class="checkbox-group">
+          <h4>Free Weights</h4>
+          <div class="equipment-grid">
+            <div class="checkbox-item">
+              <input type="checkbox" id="dumbbells-checkbox" name="equipment" value="dumbbells" class="equipment-checkbox" />
+              <label for="dumbbells-checkbox">Dumbbells</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="kettlebells-checkbox" name="equipment" value="kettlebells" class="equipment-checkbox" />
+              <label for="kettlebells-checkbox">Kettlebells</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="barbell-checkbox" name="equipment" value="barbell" class="equipment-checkbox" />
+              <label for="barbell-checkbox">Barbell</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="bench-checkbox" name="equipment" value="bench" class="equipment-checkbox" />
+              <label for="bench-checkbox">Bench</label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Group 3: Machines -->
+        <div class="checkbox-group">
+          <h4>Machines</h4>
+          <div class="equipment-grid">
+            <div class="checkbox-item">
+              <input type="checkbox" id="treadmill-checkbox" name="equipment" value="treadmill" class="equipment-checkbox" />
+              <label for="treadmill-checkbox">Treadmill</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="checkbox" id="cable-checkbox" name="equipment" value="cable_machines" class="equipment-checkbox" />
+              <label for="cable-checkbox">Cable Machine</label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- All equipment as a special option -->
+        <div class="checkbox-grid">
+          <div class="checkbox-item special-equipment">
+            <input type="checkbox" id="all-equipment-checkbox" name="equipment" value="all" />
+            <label for="all-equipment-checkbox"><strong>🏟️ Full Gym Access</strong> (All equipment available)</label>
+          </div>
+        </div>
+      </fieldset>
 
       <fieldset>
-        <legend>Workout Style</legend>
+        <legend>🎨 Workout Style</legend>
         <select id="workout-style" name="workout-style">
           <option value="variety">Variety (More exercises, standard sets)</option>
           <option value="focus">Focus (Fewer exercises, more sets)</option>
         </select>
         <div class="option-description">
-          <p><strong>Variety</strong>: Includes more different exercises with standard sets/reps. Great for keeping workouts interesting and targeting muscles from multiple angles.</p>
-          <p><strong>Focus</strong>: Concentrates on fewer exercises but with more sets per exercise. Ideal for mastering movements and creating greater stimulus on specific muscle groups.</p>
+          <p><strong>Variety:</strong> More different exercises with standard sets. Great for keeping workouts interesting and targeting muscles from multiple angles.</p>
+          <p><strong>Focus:</strong> Fewer exercises but with more sets per exercise. Ideal for mastering movements and creating greater stimulus on specific muscle groups.</p>
         </div>
       </fieldset>
 
-      <button type="submit" id="generate-btn">Generate Workout ✨</button>
+      <button type="submit" id="generate-btn">✨ Generate My Workout</button>
     </form>
 
     <section id="workout-result" style="display: none;">
